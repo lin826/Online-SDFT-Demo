@@ -11,13 +11,15 @@ weights:
 
 Three views are computed, matching the blog figure's three panels:
 
-  arms + k sweep   end-of-week snapshot: mean accuracy across all three regime
-                   policies vs the per-query prompt-token bill        (Panel A)
-  curves           accuracy on the *current* regime's held-out policy at each
-                   checkpoint, with only the history available then; position
-                   0 (nothing streamed) is the zero-shot value        (Panel B)
-  regret           cumulative mistakes on the streamed items themselves, each
-                   predicted BEFORE its label is revealed             (Panel C)
+  arms + ICL k sweep   end-of-week snapshot: mean accuracy across all three
+                       regime policies vs the per-query prompt-token bill
+                       (Panel A). RAG is fixed at k=6.
+  curves               accuracy on the *current* regime's held-out policy at each
+                       checkpoint, with only the history available then; position
+                       0 (nothing streamed) is the zero-shot value        (Panel B)
+  regret               cumulative mistakes on the streamed items themselves, each
+                       predicted BEFORE its label is revealed; same k as A/B
+                       (Panel C)
 
 Writes outputs/baselines.json. Run before run_sdft.py,
 which adds the Online-SDFT arm and draws the figure.
@@ -38,7 +40,8 @@ from triage_common import (
 )
 
 # --- baseline knobs --------------------------------------------------------- #
-K_SWEEP = (3, 6, 9, 12)   # context sizes tried for BOTH baselines
+ICL_K_SWEEP = (3, 6, 9, 12)   # ICL context sizes tried for Panel A
+RAG_K = 6                     # RAG fixed at 6 for accuracy + regret
 CHECKPOINTS = tuple(range(6, STREAM_LEN + 1, 6))   # the grid run_sdft.py probes too
 
 
@@ -79,21 +82,26 @@ def main() -> None:
         return {"acc_by_regime": accs, "acc_mean": sum(accs.values()) / len(accs),
                 "tok_per_query": sum(token_counts) / len(token_counts)}
 
-    # -- end-of-week arms + the k sweep (Panel A) ------------------------------ #
-    print("\n== k sweep at end of week: mean accuracy across the three policies ==",
-          flush=True)
+    # -- end-of-week arms + ICL k sweep (Panel A); RAG stays at RAG_K ---------- #
+    print("\n== end-of-week arms: ICL k sweep + fixed RAG k "
+          f"(RAG_K={RAG_K}) ==", flush=True)
     sweeps: dict[str, dict] = {"ICL": {}, "RAG": {}}
-    for method in ("ICL", "RAG"):
-        for k in K_SWEEP:
-            sweeps[method][k] = eval_arm(method, k, STREAM_LEN, f"{method.lower()} k={k}")
-            entry = sweeps[method][k]
-            regime_report = "  ".join(f"{regime}={entry['acc_by_regime'][regime]:.2f}"
-                                      for regime in REGIMES)
-            print(f"  {method} k={k:2d}: mean={entry['acc_mean']:.2f}  ({regime_report})  "
-                  f"tok/query={entry['tok_per_query']:.0f}", flush=True)
-    icl_k = max(K_SWEEP, key=lambda k: (sweeps["ICL"][k]["acc_mean"], -k))  # ties -> cheaper
-    rag_k = max(K_SWEEP, key=lambda k: (sweeps["RAG"][k]["acc_mean"], -k))
-    print(f"  best: ICL k={icl_k}, RAG k={rag_k}", flush=True)
+    for k in ICL_K_SWEEP:
+        sweeps["ICL"][k] = eval_arm("ICL", k, STREAM_LEN, f"icl k={k}")
+        entry = sweeps["ICL"][k]
+        regime_report = "  ".join(f"{regime}={entry['acc_by_regime'][regime]:.2f}"
+                                  for regime in REGIMES)
+        print(f"  ICL k={k:2d}: mean={entry['acc_mean']:.2f}  ({regime_report})  "
+              f"tok/query={entry['tok_per_query']:.0f}", flush=True)
+    icl_k = max(ICL_K_SWEEP, key=lambda k: (sweeps["ICL"][k]["acc_mean"], -k))  # ties -> cheaper
+    sweeps["RAG"][RAG_K] = eval_arm("RAG", RAG_K, STREAM_LEN, f"rag k={RAG_K}")
+    rag_entry = sweeps["RAG"][RAG_K]
+    rag_report = "  ".join(f"{regime}={rag_entry['acc_by_regime'][regime]:.2f}"
+                           for regime in REGIMES)
+    print(f"  RAG k={RAG_K:2d}: mean={rag_entry['acc_mean']:.2f}  ({rag_report})  "
+          f"tok/query={rag_entry['tok_per_query']:.0f}", flush=True)
+    rag_k = RAG_K
+    print(f"  using: ICL k={icl_k}, RAG k={rag_k}", flush=True)
 
     print("\n== zero-shot arm ==", flush=True)
     zs_arm = eval_arm(None, 0, 0, "zs")
@@ -119,8 +127,7 @@ def main() -> None:
 
     # -- accumulated regret on the stream itself (Panel C) --------------------- #
     # Prequential: predict item t with the history 1..t-1, THEN reveal the label.
-    # k is swept HERE too — Panel C shows each baseline at its LEAST-REGRET k,
-    # which may differ from its whole-week-accuracy k (most flattering per metric).
+    # Same k as Panels A/B (ICL from the accuracy sweep, RAG fixed at RAG_K).
     print("\n== accumulated regret: predict each streamed item before its label ==",
           flush=True)
 
@@ -137,17 +144,10 @@ def main() -> None:
     regret: dict[str, list] = {"pos": list(range(STREAM_LEN + 1)),
                                "ZS": regret_curve("ZS", 0, "regret/zs")}
     print(f"  ZS: {regret['ZS'][-1]}/{STREAM_LEN} mistakes", flush=True)
-    regret_sweep: dict[str, dict[int, int]] = {}
-    regret_k: dict[str, int] = {}
-    for method in ("ICL", "RAG"):
-        curves_by_k = {k: regret_curve(method, k, f"regret/{method.lower()} k={k}")
-                       for k in K_SWEEP}
-        regret_sweep[method] = {k: curve[-1] for k, curve in curves_by_k.items()}
-        regret_k[method] = min(K_SWEEP, key=lambda k: (regret_sweep[method][k], k))
-        regret[method] = curves_by_k[regret_k[method]]
-        table = "  ".join(f"k={k}:{final}" for k, final in regret_sweep[method].items())
-        print(f"  {method}: {table}  -> least-regret k={regret_k[method]} "
-              f"({regret[method][-1]}/{STREAM_LEN} mistakes)", flush=True)
+    for method, k in (("ICL", icl_k), ("RAG", rag_k)):
+        regret[method] = regret_curve(method, k, f"regret/{method.lower()} k={k}")
+        print(f"  {method} k={k}: {regret[method][-1]}/{STREAM_LEN} mistakes",
+              flush=True)
 
     # The qualitative drifted items — off-hours `social` pushes that should now
     # INTERRUPT. Capture every candidate's baseline replies (end-of-week
@@ -169,11 +169,9 @@ def main() -> None:
     baselines = {
         "config": {"model": MODEL_NAME, "seed": SEED, "stream_len": STREAM_LEN,
                    "drifts": list(DRIFTS), "regimes": list(REGIMES), "eval_n": EVAL_N,
-                   "k_sweep": list(K_SWEEP), "icl_k": icl_k, "rag_k": rag_k,
-                   "icl_k_regret": regret_k["ICL"], "rag_k_regret": regret_k["RAG"],
+                   "icl_k_sweep": list(ICL_K_SWEEP), "icl_k": icl_k, "rag_k": rag_k,
                    "checkpoints": list(CHECKPOINTS)},
         "sweeps": sweeps,
-        "regret_sweep": regret_sweep,
         "arms": {
             "ZS": {**zs_arm, "labels_needed": 0},
             f"ICL k={icl_k}": {**sweeps["ICL"][icl_k], "labels_needed": icl_k},

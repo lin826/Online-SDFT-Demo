@@ -373,13 +373,12 @@ def make_figure(results: dict) -> None:
     ax_drift.grid(True, alpha=0.25)
 
     # Panel C: accumulated regret — cumulative mistakes on the streamed items,
-    # each predicted before its label lands (prequential). ICL and RAG show at
-    # their LEAST-REGRET k, which may differ from their whole-week-accuracy k.
+    # each predicted before its label lands (prequential). Same ICL/RAG k as A/B.
     for x in drifts:
         ax_regret.axvline(x, color="#5f6368", ls="--", lw=1.2)
     series = (("ZS", "ZS", ":"),
-              ("ICL", f"ICL k={results['config']['icl_k_regret']}", "-"),
-              ("RAG", f"RAG k={results['config']['rag_k_regret']}", "-"),
+              ("ICL", icl_name, "-"),
+              ("RAG", rag_name, "-"),
               ("SDFT", "Online-SDFT", "-"))
     for key, name, style in series:
         color = colors[key if key != "SDFT" else "Online-SDFT"]
@@ -392,7 +391,7 @@ def make_figure(results: dict) -> None:
     ax_regret.set_xlim(-1, stream_len + 4)
     ax_regret.set_xlabel("Items streamed")
     ax_regret.set_ylabel("Cumulative mistakes on streamed items")
-    ax_regret.set_title("C.  Accumulated regret — baselines at their least-regret k",
+    ax_regret.set_title("C.  Accumulated regret",
                         fontsize=12, fontweight="bold")
     ax_regret.grid(True, alpha=0.25)
     ax_regret.legend(fontsize=8.5, loc="upper left", framealpha=0.95)

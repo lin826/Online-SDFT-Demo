@@ -1,3 +1,22 @@
+# Python
 __pycache__/
-outputs/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Notebooks / tooling
+.ipynb_checkpoints/
+.claude/
+
+# OS / editor
 .DS_Store
+.idea/
+.vscode/
+
+# Run outputs (adapters, JSON results, targets)
+outputs/
+
+# Scratch figure checks (not shipped)
+figures/_head_check/
