@@ -39,10 +39,9 @@ from triage_common import (
 )
 
 # --- training knobs (the blog's knob table) ---------------------------------- #
-# Regret-primary defaults from sweep_sdft.py. Student always serves / guesses
-# with the bare prompt; the teacher sees the expert (user) action as an
-# in-context demonstration. TEACHER_SHOTS prepends older causal decisions to
-# the teacher only (0 = just this item's expert action).
+# Student always serves / guesses with the bare prompt; the teacher sees the
+# expert (user) action as an in-context demonstration. TEACHER_SHOTS prepends
+# older causal decisions to the teacher only (0 = just this item's expert action).
 LORA_R = 8                                       # adapter rank (~1.4 MB on disk)
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
@@ -55,12 +54,15 @@ REPLAY = 16          # sliding replay-buffer size (items; 32 drowns the fresh it
 STEPS_PER_ITEM = 8   # batch_size=1 update steps per incoming item — 3-way wants
                      # more gradient than binary (3 stalls on the cold start)
 TEACHER_SHOTS = 0    # extra history demos in the teacher context (beyond expert)
+DISTILL_T = 3.0      # temperature for the teacher→student soft-CE term
+DISTILL_BETA = 0.25  # weight on that term (0 = hard CE only; pure soft CE collapses)
 CHECKPOINTS = tuple(range(6, STREAM_LEN + 1, 6))   # eval every 6 streamed items
 
 ADAPTER_DIR = OUT_DIR / "adapter-online-sdft"
 
 
-def make_updater(model, tok, lr: float = LR):
+def make_updater(model, tok, lr: float = LR,
+                 distill_t: float = DISTILL_T, distill_beta: float = DISTILL_BETA):
     """Persistent AdamW + SDFT teacher→student distill.
 
     Teacher (no grad) is the same adapter conditioned on the expert action;
@@ -73,8 +75,6 @@ def make_updater(model, tok, lr: float = LR):
     optimizer = torch.optim.AdamW(trainable, lr=lr)
     eos = tok.eos_token or ""
     device = next(model.parameters()).device
-    distill_t = 3.0       # soften teacher / student for the KL term
-    distill_beta = 0.25   # weight on temperature-scaled soft CE
 
     def encode_prompt(messages: list[dict]) -> list[int]:
         text = tok.apply_chat_template(
@@ -99,21 +99,24 @@ def make_updater(model, tok, lr: float = LR):
             n_comp = len(comp_ids)
             comp_tensor = torch.tensor(comp_ids, device=device)
 
-            with torch.no_grad():
-                t_out = model(input_ids=torch.tensor(
-                    [teacher_ids + comp_ids], device=device))
-                t_logits = completion_logits(t_out.logits, len(teacher_ids), n_comp)
-
             s_out = model(input_ids=torch.tensor(
                 [student_ids + comp_ids], device=device))
             s_logits = completion_logits(s_out.logits, len(student_ids), n_comp)
-
             hard = F.cross_entropy(
                 s_logits.reshape(-1, s_logits.size(-1)), comp_tensor)
-            t_soft = F.softmax(t_logits / distill_t, dim=-1)
-            soft = (-(t_soft * F.log_softmax(s_logits / distill_t, dim=-1))
-                    .sum(dim=-1).mean()) * (distill_t * distill_t)
-            loss = hard + distill_beta * soft
+
+            if distill_beta > 0:
+                with torch.no_grad():
+                    t_out = model(input_ids=torch.tensor(
+                        [teacher_ids + comp_ids], device=device))
+                    t_logits = completion_logits(
+                        t_out.logits, len(teacher_ids), n_comp)
+                t_soft = F.softmax(t_logits / distill_t, dim=-1)
+                soft = (-(t_soft * F.log_softmax(s_logits / distill_t, dim=-1))
+                        .sum(dim=-1).mean()) * (distill_t * distill_t)
+                loss = hard + distill_beta * soft
+            else:
+                loss = hard
             loss.backward()
             torch.nn.utils.clip_grad_norm_(trainable, 1.0)   # keep bs=1 steps from diverging
             optimizer.step()
@@ -295,7 +298,8 @@ def main() -> None:
         "config": {**config, "lora_r": LORA_R, "lora_alpha": LORA_ALPHA,
                    "lora_dropout": LORA_DROPOUT, "lr": LR,
                    "replay": REPLAY, "steps_per_item": STEPS_PER_ITEM,
-                   "teacher_shots": TEACHER_SHOTS},
+                   "teacher_shots": TEACHER_SHOTS,
+                   "distill_t": DISTILL_T, "distill_beta": DISTILL_BETA},
         "arms": arms,
         "sweeps": baselines["sweeps"],
         "curve": curve,

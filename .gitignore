@@ -18,5 +18,11 @@ venv/
 # Run outputs (adapters, JSON results, targets)
 outputs/
 
+# Local-only hyperparameter / schedule sweeps (not part of the demo)
+sweep_*.py
+outputs/*sweep*
+*_sweep.json
+*_sweep.jsonl
+
 # Scratch figure checks (not shipped)
 figures/_head_check/
