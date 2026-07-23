@@ -13,9 +13,8 @@ The steps, exactly as in the accompanying blog post:
   4. Serving: bare prompt — the adapter carries the policy
 
 Reads outputs/baselines.json (run run_baselines.py
-first) and writes results.json, the trained adapter, and the three-panel blog
-figure: A whole-week accuracy vs token bill, B current-regime curves, C
-accumulated regret.
+first) and writes results.json, the trained adapter, and the blog figures:
+A/B/C accuracy panels plus D/E on-device latency / latency-vs-accuracy.
 
 Run:  python run_sdft.py
 """
@@ -36,6 +35,10 @@ from triage_common import (
     STREAM_LEN, accuracy, build_eval, build_msgs, build_stream, build_teacher_msgs,
     generate, load_base_model, load_tokenizer, parse_action, phase_of, pick_device,
     recent_demos, render_prompt,
+)
+from triage_perf import (
+    PERF_WARMUP, benchmark_serve, heldout_msgs, make_perf_figure, timed_callable,
+    write_perf,
 )
 
 # --- training knobs (the blog's knob table) ---------------------------------- #
@@ -294,6 +297,48 @@ def main() -> None:
     regret = dict(baselines["regret"])
     regret["SDFT"] = sdft_regret
 
+    # -- on-device serve latency / memory + one SDFT update step --------------- #
+    print("\n== serve latency / memory (held-out batch, after warmup) ==", flush=True)
+    sdft_serve = benchmark_serve(
+        model, tok, heldout_msgs(evals, lambda _item: None),
+        warmup=PERF_WARMUP, label="perf/sdft")
+    print(f"  Online-SDFT  median={sdft_serve['latency_ms_median']:.0f}ms  "
+          f"p90={sdft_serve['latency_ms_p90']:.0f}ms  "
+          f"new_tok~{sdft_serve['new_tokens_median']:.0f}  "
+          f"RSS={sdft_serve['peak_rss_mb']:.0f}MB", flush=True)
+
+    # One online update step on a fresh+replay-style mini-batch (same shape as
+    # the live loop) — the recurring train cost the phone pays per notification.
+    print("\n== SDFT update-step latency ==", flush=True)
+    sample_row = rows[-1]
+    update_batch = [sample_row]
+    for action in ACTIONS:
+        pool = [b for b in rows[:-1] if b["action"] == action]
+        if action != sample_row["action"] and pool:
+            update_batch.append(pool[-1])
+    sdft_update = timed_callable(
+        lambda: update(update_batch, STEPS_PER_ITEM),
+        device=device, repeats=3, warmup=1)
+    print(f"  update median={sdft_update['latency_ms_median']:.0f}ms  "
+          f"(steps_per_item={STEPS_PER_ITEM}, batch={len(update_batch)})",
+          flush=True)
+
+    perf = dict(baselines.get("perf") or {})
+    perf_arms = dict(perf.get("arms") or {})
+    perf_arms["Online-SDFT"] = sdft_serve
+    perf = {
+        **perf,
+        "device": device,
+        "warmup": PERF_WARMUP,
+        "n_queries": len(evals[1]) + len(evals[2]) + len(evals[3]) - PERF_WARMUP,
+        "arms": perf_arms,
+        "sdft_update": {**sdft_update,
+                        "steps_per_item": STEPS_PER_ITEM,
+                        "batch_size": len(update_batch)},
+        "adapter_bytes": adapter_bytes,
+    }
+    write_perf(perf)
+
     results = {
         "config": {**config, "lora_r": LORA_R, "lora_alpha": LORA_ALPHA,
                    "lora_dropout": LORA_DROPOUT, "lr": LR,
@@ -310,11 +355,13 @@ def main() -> None:
         "adapter_bytes": adapter_bytes,
         # fraction of stream where the bare student already matched the expert
         "reinforce_frac": reinforce_frac,
+        "perf": perf,
     }
     (OUT_DIR / "results.json").write_text(json.dumps(results, indent=2))
     print("\nwrote", OUT_DIR / "results.json", flush=True)
 
     make_figure(results)
+    make_perf_figure(results, perf)
     print("DONE", flush=True)
 
 

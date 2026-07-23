@@ -2,3 +2,4 @@ torch>=2.3
 transformers>=4.54
 peft>=0.15
 matplotlib>=3.8
+psutil>=5.9

@@ -38,6 +38,9 @@ from triage_common import (
     generate, load_base_model, load_tokenizer, make_retriever, parse_action,
     phase_of, pick_device, prompt_tokens, recent_demos, render_prompt,
 )
+from triage_perf import (
+    PERF_WARMUP, baseline_demos_fn, benchmark_serve, heldout_msgs, write_perf,
+)
 
 # --- baseline knobs --------------------------------------------------------- #
 ICL_K_SWEEP = (3, 6, 9, 12)   # ICL context sizes tried for Panel A
@@ -166,6 +169,33 @@ def main() -> None:
                         label="q/rag", batch_size=1)[0],
     } for item in social_items]
 
+    # -- on-device serve latency / memory on the fixed held-out batch ---------- #
+    # Warmup then median over the remaining held-out chats (all three regimes),
+    # end-of-week causal context — the same serve path Panel A grades.
+    print("\n== serve latency / memory (held-out batch, after warmup) ==", flush=True)
+    zs_name, icl_name, rag_name = "ZS", f"ICL k={icl_k}", f"RAG k={rag_k}"
+    perf_arms = {
+        zs_name: benchmark_serve(
+            base, tok, heldout_msgs(evals, baseline_demos_fn(None, 0, stream)),
+            warmup=PERF_WARMUP, label="perf/zs"),
+        icl_name: benchmark_serve(
+            base, tok, heldout_msgs(evals, baseline_demos_fn("ICL", icl_k, stream)),
+            warmup=PERF_WARMUP, label="perf/icl"),
+        rag_name: benchmark_serve(
+            base, tok, heldout_msgs(evals, baseline_demos_fn("RAG", rag_k, stream)),
+            warmup=PERF_WARMUP, label="perf/rag"),
+    }
+    for name, entry in perf_arms.items():
+        device_mb = entry.get("peak_device_mb")
+        device_bit = (f"  device={device_mb:.0f}MB" if device_mb is not None else "")
+        print(f"  {name:12s} median={entry['latency_ms_median']:.0f}ms  "
+              f"p90={entry['latency_ms_p90']:.0f}ms  "
+              f"new_tok~{entry['new_tokens_median']:.0f}  "
+              f"RSS={entry['peak_rss_mb']:.0f}MB{device_bit}", flush=True)
+    perf = {"device": device, "warmup": PERF_WARMUP,
+            "n_queries": EVAL_N * 3 - PERF_WARMUP, "arms": perf_arms}
+    write_perf(perf)   # baselines-only snapshot; run_sdft.py merges Online-SDFT
+
     baselines = {
         "config": {"model": MODEL_NAME, "seed": SEED, "stream_len": STREAM_LEN,
                    "drifts": list(DRIFTS), "regimes": list(REGIMES), "eval_n": EVAL_N,
@@ -173,13 +203,14 @@ def main() -> None:
                    "checkpoints": list(CHECKPOINTS)},
         "sweeps": sweeps,
         "arms": {
-            "ZS": {**zs_arm, "labels_needed": 0},
-            f"ICL k={icl_k}": {**sweeps["ICL"][icl_k], "labels_needed": icl_k},
-            f"RAG k={rag_k}": {**sweeps["RAG"][rag_k], "labels_needed": STREAM_LEN},
+            zs_name: {**zs_arm, "labels_needed": 0},
+            icl_name: {**sweeps["ICL"][icl_k], "labels_needed": icl_k},
+            rag_name: {**sweeps["RAG"][rag_k], "labels_needed": STREAM_LEN},
         },
         "curves": curves,
         "regret": regret,
         "qualitative_base": qualitative,
+        "perf": perf,
     }
     BASELINES_JSON.write_text(json.dumps(baselines, indent=2))
     print(f"\nwrote {BASELINES_JSON}", flush=True)
