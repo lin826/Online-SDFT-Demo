@@ -28,10 +28,12 @@ draws every figure — `outputs/results.json` + `figures/*.png`, seeded end to
 end (same command, same numbers on the same device). ~15 min on an M-series
 Mac (MPS) or any CUDA GPU.
 
-Prefer a 3-minute notebook? Open
-`[online_sdft_colab.ipynb](https://colab.research.google.com/github/lin826/online-sdft-demo/blob/main/online_sdft_colab.ipynb)`
+Prefer a ~3-minute notebook? Open
+[online_sdft_colab.ipynb](https://colab.research.google.com/github/lin826/Online-SDFT-Demo/blob/main/online_sdft_colab.ipynb)
 on a free Colab T4 — standalone, it fetches the seeded dataset straight from
 this repo.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lin826/Online-SDFT-Demo/blob/main/online_sdft_colab.ipynb)
 
 Optional:
 
