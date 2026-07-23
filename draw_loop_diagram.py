@@ -1,8 +1,8 @@
 """Draw the online-SDFT loop diagram for the blog post.
 
-One model, two roles: the served model makes its own bare-prompt call (TEACH),
-your behavior referees it with one bit (CHECK), and a few batch_size=1 LoRA
-steps distill the kept-or-corrected action back into the adapter (LEARN).
+One model, two roles: the student makes a bare-prompt call (TEACH), your
+behavior is the expert demonstration that conditions the teacher (CHECK), and
+a few batch_size=1 LoRA steps soft-CE distill teacher → student (LEARN).
 The TEACH / CHECK / LEARN diagram embedded in the accompanying blog post.
 
 Writes figures/online_sdft_loop.png.
@@ -89,23 +89,23 @@ def main() -> None:
     ax.text(1.0, 23.7, "One model, two roles — the online SDFT loop",
             fontsize=11.5, fontweight="bold", color="#202124", va="top")
     ax.text(1.0, 21.9, "teacher and student are the same 230M network; "
-                       "your behavior only referees",
+                       "expert action conditions the teacher",
             fontsize=8.8, color=GREY, va="top")
 
     box(ax, 1.5, 11.5, 17.0, 6.4, GREY, "INCOMING ITEM",
         "one notification\nbare prompt\n(~90 tokens)")
-    box(ax, 24.0, 11.5, 17.0, 6.4, BLUE, "TEACH — serving call",
-        "LFM2.5-230M + LoRA\n(the adapter so far)")
-    box(ax, 53.0, 11.5, 17.0, 6.4, ORANGE, "CHECK — one-bit referee",
-        "your behavior\nopen / wait / never")
+    box(ax, 24.0, 11.5, 17.0, 6.4, BLUE, "STUDENT — serving call",
+        "LFM2.5-230M + LoRA\nbare prompt (π·|x)")
+    box(ax, 53.0, 11.5, 17.0, 6.4, ORANGE, "TEACHER — expert demo",
+        "same adapter +\nyour action as ICL\n(π·|x, c)")
     ax.add_patch(FancyBboxPatch((24.0, 0.3), 24.0, 6.4,
                                 boxstyle="round,pad=0.02,rounding_size=0.55",
                                 linewidth=1.5, edgecolor=PURPLE, facecolor="white",
                                 zorder=1))
-    ax.text(41.0, 0.3 + 6.4 + 0.5, "LEARN — batch_size=1", ha="center", va="bottom",
+    ax.text(41.0, 0.3 + 6.4 + 0.5, "LEARN — soft-CE distill", ha="center", va="bottom",
             fontsize=9.5, fontweight="bold", color=PURPLE, zorder=4)
     ax.text(36.0, 0.3 + 6.4 / 2,
-            "a few LoRA steps on the target\n(+ replay per other class)",
+            "LoRA steps: teacher → student\n(+ replay per other class)",
             ha="center", va="center", fontsize=8.5, color="#202124", zorder=4,
             linespacing=1.15)
 
@@ -119,11 +119,11 @@ def main() -> None:
 
     # Tip just right of LEARN (x=48) and below its vertical mid — outside the fill.
     curve_arrow(ax, (58.5, 10.0), (55.0, 6.8), (52.2, 3.8), (49.2, 2.15), ORANGE)
-    ax.text(61.5, 9.2, "matched → reinforce", ha="center", va="center",
+    ax.text(61.5, 9.2, "expert action c", ha="center", va="center",
             fontsize=7.4, color=GREEN)
-    ax.text(61.5, 8.1, "missed → correct", ha="center", va="center",
+    ax.text(61.5, 8.1, "(your open / wait / never)", ha="center", va="center",
             fontsize=7.4, color=RED)
-    ax.text(61.5, 6.5, "bare action target —\nnot a gold answer", ha="center",
+    ax.text(61.5, 6.5, "soft teacher targets —\nnot hard SFT labels", ha="center",
             va="top", fontsize=7.0, color=GREY, style="italic", linespacing=1.05)
 
     # Tip under TEACH bottom; steep exit so the -|> head reads as a triangle

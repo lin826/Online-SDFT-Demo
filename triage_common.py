@@ -148,6 +148,11 @@ def render_prompt(item: dict) -> str:
             + item_block(item))
 
 
+def item_prompt(item: dict) -> str:
+    """Prefer a pre-rendered prompt (exported / Colab JSON) when present."""
+    return item["prompt"] if "prompt" in item else render_prompt(item)
+
+
 # Category mixes, class-balanced under each regime's policy (10/10/10, 4/4/4,
 # 6/6/6 in the stream blocks; 4/4/4 in every eval set) so a tiny LoRA learns
 # the mapping, not the class prior. Block lengths follow the 50/20/30 week.
@@ -202,7 +207,7 @@ def phase_of(pos: int) -> int:
 
 def recent_demos(history: list[dict], k: int) -> list[tuple[dict, str]]:
     """The k most recent observed decisions, oldest first — the causal ICL
-    context (and the SDFT teacher's recent-decision window)."""
+    context (and optional history prepended to the SDFT teacher chat)."""
     return [(item, item["action"]) for item in history[-k:]]
 
 
@@ -256,15 +261,33 @@ def to_model_device(encoding: dict, model) -> dict:
 
 
 def demo_messages(item: dict, action: str) -> list[dict]:
-    return [{"role": "user", "content": render_prompt(item)},
+    return [{"role": "user", "content": item_prompt(item)},
             {"role": "assistant", "content": action}]
 
 
 def build_msgs(item: dict, demos: list[tuple[dict, str]] | None = None) -> list[dict]:
+    """Student / serving chat: bare triage prompt, optional causal ICL demos."""
     messages: list[dict] = []
     for demo_item, demo_action in demos or []:
         messages += demo_messages(demo_item, demo_action)
-    messages.append({"role": "user", "content": render_prompt(item)})
+    messages.append({"role": "user", "content": item_prompt(item)})
+    return messages
+
+
+def build_teacher_msgs(item: dict, expert_action: str,
+                       demos: list[tuple[dict, str]] | None = None) -> list[dict]:
+    """Teacher chat: same model, privileged with the expert (user) action.
+
+    Shows the user's actual behavior for this item as an in-context demonstration,
+    then re-asks the bare triage question so the teacher produces π(·|x, c) —
+    the SDFT teacher of Shenfeld et al., with c = observed user behavior.
+    Optional `demos` are older causal decisions prepended before that demo.
+    """
+    messages: list[dict] = []
+    for demo_item, demo_action in demos or []:
+        messages += demo_messages(demo_item, demo_action)
+    messages += demo_messages(item, expert_action)
+    messages.append({"role": "user", "content": item_prompt(item)})
     return messages
 
 

@@ -1,17 +1,17 @@
 """Hyper-parameter sweep for the online-SDFT arm of the triage showcase.
 
-Each config replays the exact online loop of run_sdft.py — prequential
-guess with the live adapter, feedback, batch_size=1 updates with all-class
-replay, probe guardrail over the final regime — but probes only what the
-headline metric needs, so one config costs ~4 min instead of a full run:
+Each config replays the exact online loop of run_sdft.py — prequential student
+guess (bare prompt), teacher conditioned on the expert (user) action, soft-CE
+distill with all-class replay, probe guardrail over the final regime — but
+probes only what the headline metric needs, so one config costs ~4 min instead
+of a full run:
 
   metric   set PRIMARY below. "live_mean" ranks by the whole-week live mean
            (held-out accuracy per regime at its block-end checkpoint, averaged
            — Panel A's yardstick) with regret as tiebreak; "regret" ranks by
            accumulated stream mistakes (Panel C's yardstick) with the live
-           mean as tiebreak. Note: TEACHER_SHOTS only conditions the online
-           GUESS — the gradient target is the observed action either way — so
-           the shots axis moves the regret measurement, not the weights.
+           mean as tiebreak. TEACHER_SHOTS prepends older causal decisions to
+           the teacher chat only (student always guesses bare).
 
 Three stages, all automatic:
 
@@ -39,8 +39,9 @@ from peft import LoraConfig, get_peft_model
 from run_sdft import make_updater
 from triage_common import (
     ACTIONS, DRIFTS, MODEL_NAME, OUT_DIR, REGIMES, SEED, STREAM_LEN, accuracy,
-    build_eval, build_msgs, build_stream, generate, load_base_model,
-    load_tokenizer, parse_action, pick_device, recent_demos, render_prompt,
+    build_eval, build_msgs, build_stream, build_teacher_msgs, generate,
+    load_base_model, load_tokenizer, parse_action, pick_device, recent_demos,
+    render_prompt,
 )
 
 # --- the sweep space --------------------------------------------------------- #
@@ -49,7 +50,7 @@ DEFAULT = {"lr": 7e-4, "steps": 8, "r": 8, "shots": 0, "replay": 16}   # adopted
 LR_GRID = (7e-4, 1e-3)    # 5e-4 underperforms, 2e-3 collapses (earlier sweep)
 STEPS_GRID = (5, 6, 8)    # steps=5 scored regret 24 in the earlier sweep
 R_GRID = (16,)            # stage B, around the winner (8 is the default centre)
-SHOTS_GRID = (0,)         # 0 = guess with the bare prompt, i.e. the serving call
+SHOTS_GRID = (0,)         # 0 = teacher sees only this item's expert action
 REPLAY_GRID = (8,)        # 32 drowns the fresh item (earlier sweep)
 EXTRA_SEEDS = (8, 9)      # stage C robustness check (data stays seed-7)
 
@@ -77,12 +78,14 @@ def run_config(base, tok, stream, evals, cfg: dict, torch_seed: int = SEED) -> d
     replay_buffer: list[dict] = []
     sampler = random.Random(torch_seed)
     for i, item in enumerate(stream):
-        demos = recent_demos(stream[:i], cfg["shots"]) if cfg["shots"] else None
-        guess = generate(model, tok, [build_msgs(item, demos)],
+        # STUDENT: bare serving call (regret measurement)
+        guess = generate(model, tok, [build_msgs(item)],
                          label=f"guess@{i + 1}", batch_size=1)[0]
         mistakes += parse_action(guess) != item["action"]
 
-        row = {"prompt": item["prompt"], "target": item["action"], "action": item["action"]}
+        history = recent_demos(stream[:i], cfg["shots"]) if cfg["shots"] else None
+        row = {"prompt": item["prompt"], "action": item["action"],
+               "teacher_msgs": build_teacher_msgs(item, item["action"], history)}
         replay_buffer = (replay_buffer + [row])[-cfg["replay"]:]
         batch = [row]
         for action in ACTIONS:

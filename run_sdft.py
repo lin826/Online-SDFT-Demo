@@ -5,10 +5,10 @@ The steps, exactly as in the accompanying blog post:
   1. A tiny dataset: a stream that drifts twice
        seeded synthetic inbox; the 3-way policy flips at DRIFTS (triage_common)
   2. The online loop, one item at a time (prequential: test, THEN train)
-       the model makes its own call with the current adapter — that prediction
-       is scored for the regret curve BEFORE the label lands; your observed
-       action is the only supervision: feedback = 1 (reinforce its on-policy
-       answer) or 0 (correct toward yours); then batch_size=1 updates w/ replay
+       Student (bare prompt) guesses first — scored for regret BEFORE feedback.
+       Teacher is the same adapter conditioned on the expert action (your
+       observed behavior). Distill teacher → student with hard CE + temp-soft
+       KL on the completion tokens (SDFT), batch_size=1 with replay.
   3. The probe guardrail: keep the best adapter on the current regime
   4. Serving: bare prompt — the adapter carries the policy
 
@@ -27,23 +27,22 @@ import json
 import random
 
 import torch
+import torch.nn.functional as F
 from peft import (LoraConfig, get_peft_model, get_peft_model_state_dict,
                   set_peft_model_state_dict)
 
 from triage_common import (
     ACTIONS, BASELINES_JSON, DRIFTS, FIG_DIR, MODEL_NAME, OUT_DIR, REGIMES, SEED,
-    STREAM_LEN, accuracy, build_eval, build_msgs, build_stream, generate,
-    load_base_model, load_tokenizer, parse_action, phase_of, pick_device,
-    render_prompt,
+    STREAM_LEN, accuracy, build_eval, build_msgs, build_stream, build_teacher_msgs,
+    generate, load_base_model, load_tokenizer, parse_action, phase_of, pick_device,
+    recent_demos, render_prompt,
 )
 
 # --- training knobs (the blog's knob table) ---------------------------------- #
-# The regret-primary winner from sweep_sdft.py, checked on three torch
-# seeds: stream regret 18/22/21 vs the accuracy-tuned lr=1e-3 sibling's
-# 28/20/23, giving up ~0.04 of whole-week mean (0.92/0.86/0.92 vs perfect on
-# seed 7). The online guess is the BARE serving call — the sweep showed teacher
-# demos only condition the guess (never the gradient) and the bare call guesses
-# best, so there is no TEACHER_SHOTS knob any more.
+# Regret-primary defaults from sweep_sdft.py. Student always serves / guesses
+# with the bare prompt; the teacher sees the expert (user) action as an
+# in-context demonstration. TEACHER_SHOTS prepends older causal decisions to
+# the teacher only (0 = just this item's expert action).
 LORA_R = 8                                       # adapter rank (~1.4 MB on disk)
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
@@ -55,33 +54,66 @@ LR = 7e-4            # one persistent AdamW across the whole stream: the complet
 REPLAY = 16          # sliding replay-buffer size (items; 32 drowns the fresh item)
 STEPS_PER_ITEM = 8   # batch_size=1 update steps per incoming item — 3-way wants
                      # more gradient than binary (3 stalls on the cold start)
+TEACHER_SHOTS = 0    # extra history demos in the teacher context (beyond expert)
 CHECKPOINTS = tuple(range(6, STREAM_LEN + 1, 6))   # eval every 6 streamed items
 
 ADAPTER_DIR = OUT_DIR / "adapter-online-sdft"
 
 
 def make_updater(model, tok, lr: float = LR):
-    """One persistent AdamW across the whole stream — Adam momentum carries between
-    items, so each batch_size=1 step nudges rather than lurches. Loss is on the
-    completion tokens only (exact split by concatenating token ids)."""
+    """Persistent AdamW + SDFT teacher→student distill.
+
+    Teacher (no grad) is the same adapter conditioned on the expert action;
+    student is the bare serving prompt. Loss = hard CE on the expert-action
+    tokens under the student prompt (stable on 1–2-token labels) + a
+    temperature-softened forward-KL to the teacher (the distill term).
+    Pure full-vocab soft CE collapses this 230M to a first-token loop.
+    """
     trainable = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(trainable, lr=lr)
     eos = tok.eos_token or ""
     device = next(model.parameters()).device
+    distill_t = 3.0       # soften teacher / student for the KL term
+    distill_beta = 0.25   # weight on temperature-scaled soft CE
+
+    def encode_prompt(messages: list[dict]) -> list[int]:
+        text = tok.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True)
+        return tok(text, add_special_tokens=False)["input_ids"]
+
+    def completion_logits(logits: torch.Tensor, prompt_len: int, n_comp: int):
+        # logits[i] predicts token i+1; completion starts at index prompt_len.
+        return logits[:, prompt_len - 1: prompt_len - 1 + n_comp, :]
 
     def update(batch: list[dict], steps: int) -> None:
         model.train()
         model.config.use_cache = False
         for step_idx in range(steps):
             row = batch[step_idx % len(batch)]    # cycle the (item + replay) mini-batch
-            prompt_text = tok.apply_chat_template(
-                [{"role": "user", "content": row["prompt"]}],
-                tokenize=False, add_generation_prompt=True)
-            prompt_ids = tok(prompt_text, add_special_tokens=False)["input_ids"]
-            target_ids = tok(row["target"] + eos, add_special_tokens=False)["input_ids"]
-            input_ids = torch.tensor([prompt_ids + target_ids], device=device)
-            labels = torch.tensor([[-100] * len(prompt_ids) + target_ids], device=device)
-            loss = model(input_ids=input_ids, labels=labels).loss   # completion-only loss
+            student_msgs = [{"role": "user", "content": row["prompt"]}]
+            student_ids = encode_prompt(student_msgs)
+            teacher_ids = encode_prompt(row["teacher_msgs"])
+            # Distill along the expert action (user behavior) — the privileged
+            # completion the teacher was conditioned to express.
+            comp_ids = tok(row["action"] + eos, add_special_tokens=False)["input_ids"]
+            n_comp = len(comp_ids)
+            comp_tensor = torch.tensor(comp_ids, device=device)
+
+            with torch.no_grad():
+                t_out = model(input_ids=torch.tensor(
+                    [teacher_ids + comp_ids], device=device))
+                t_logits = completion_logits(t_out.logits, len(teacher_ids), n_comp)
+
+            s_out = model(input_ids=torch.tensor(
+                [student_ids + comp_ids], device=device))
+            s_logits = completion_logits(s_out.logits, len(student_ids), n_comp)
+
+            hard = F.cross_entropy(
+                s_logits.reshape(-1, s_logits.size(-1)), comp_tensor)
+            t_soft = F.softmax(t_logits / distill_t, dim=-1)
+            soft = (-(t_soft * F.log_softmax(s_logits / distill_t, dim=-1))
+                    .sum(dim=-1).mean()) * (distill_t * distill_t)
+            loss = hard + distill_beta * soft
             loss.backward()
             torch.nn.utils.clip_grad_norm_(trainable, 1.0)   # keep bs=1 steps from diverging
             optimizer.step()
@@ -116,13 +148,12 @@ def main() -> None:
     tok = load_tokenizer()
     base = load_base_model(device)
 
-    # -- 2+3. the online loop: guess -> feedback -> batch_size=1 update ------- #
-    # Prequential (test-then-train): at each item the CURRENT adapter makes the
-    # call first — that prediction feeds the regret curve and the feedback bit —
-    # and only then does the item become training signal. The base model never
-    # sees the future, and neither does any baseline (they get the same causal
-    # history in run_baselines.py).
-    print("\n== online SDFT: guess with the live adapter, then update on the item ==",
+    # -- 2+3. the online loop: student guess -> teacher distill -> update ----- #
+    # Prequential (test-then-train): STUDENT (bare prompt) guesses first — that
+    # prediction feeds the regret curve — then TEACHER (same adapter + expert
+    # action as in-context demo) provides the soft target and we soft-CE
+    # distill into the student. Baselines get the same causal history.
+    print("\n== online SDFT: student guesses bare, teacher sees expert action ==",
           flush=True)
     model = get_peft_model(base, LoraConfig(
         r=LORA_R, lora_alpha=LORA_ALPHA, lora_dropout=LORA_DROPOUT,
@@ -143,15 +174,17 @@ def main() -> None:
     # best, and roll back to that snapshot before serving (auto-rollback on decay).
     best = {"acc": -1.0, "pos": None, "state": None}
     for i, item in enumerate(stream):
-        # the model's own call — the exact bare prompt it serves, nothing else
+        # STUDENT call — the exact bare prompt it serves, scored before feedback
         guess = generate(model, tok, [build_msgs(item)],
                          label=f"guess@{i + 1}", batch_size=1)[0]
         prediction = parse_action(guess)
-        # feedback = 1 -> its call matched what you did (reinforce its own answer)
-        # feedback = 0 -> it missed (correct: train on your action instead)
-        row = {"prompt": render_prompt(item), "target": item["action"],
-               "action": item["action"], "pred": prediction,
-               "feedback": int(prediction == item["action"])}
+        expert = item["action"]                          # actual user behavior
+        history = recent_demos(stream[:i], TEACHER_SHOTS) if TEACHER_SHOTS else None
+        # TEACHER context: optional history + (this item, expert action) demo + re-ask
+        teacher_msgs = build_teacher_msgs(item, expert, history)
+        row = {"prompt": render_prompt(item), "teacher_msgs": teacher_msgs,
+               "action": expert, "pred": prediction,
+               "feedback": int(prediction == expert)}
         rows.append(row)
         sdft_regret.append(sdft_regret[-1] + 1 - row["feedback"])
 
@@ -184,8 +217,10 @@ def main() -> None:
     reinforce_frac = n_reinforced / len(rows)
     with (OUT_DIR / "sdft_targets.jsonl").open("w") as fh:
         for row in rows:
-            fh.write(json.dumps(row) + "\n")
-    print(f"  reinforced (model already right, measured online): "
+            # teacher_msgs are bulky; log the distillable fields only
+            fh.write(json.dumps({k: row[k] for k in
+                                 ("prompt", "action", "pred", "feedback")}) + "\n")
+    print(f"  student already matched expert (online): "
           f"{n_reinforced}/{len(rows)}", flush=True)
 
     if best["state"] is not None:            # roll back to the probe-kept best
@@ -259,7 +294,8 @@ def main() -> None:
     results = {
         "config": {**config, "lora_r": LORA_R, "lora_alpha": LORA_ALPHA,
                    "lora_dropout": LORA_DROPOUT, "lr": LR,
-                   "replay": REPLAY, "steps_per_item": STEPS_PER_ITEM},
+                   "replay": REPLAY, "steps_per_item": STEPS_PER_ITEM,
+                   "teacher_shots": TEACHER_SHOTS},
         "arms": arms,
         "sweeps": baselines["sweeps"],
         "curve": curve,
@@ -268,7 +304,8 @@ def main() -> None:
         "sdft_best": {"pos": best["pos"], "acc": best["acc"]},
         "qualitative": qualitative,
         "adapter_bytes": adapter_bytes,
-        "reinforce_frac": reinforce_frac,  # fraction of the stream that was pure self-distillation
+        # fraction of stream where the bare student already matched the expert
+        "reinforce_frac": reinforce_frac,
     }
     (OUT_DIR / "results.json").write_text(json.dumps(results, indent=2))
     print("\nwrote", OUT_DIR / "results.json", flush=True)

@@ -2,11 +2,13 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lin826/Online-SDFT-Demo/blob/main/online_sdft_colab.ipynb)
 
-A phone-class 230M model ([LFM2.5-230M](https://huggingface.co/LiquidAI/LFM2.5-230M)) learns your **drifting** notification-triage policy **online** — one `batch_size=1` LoRA update per item, supervised only by implicit feedback (which notifications you opened), **no gold labels** — and beats causal ICL and RAG baselines on whole-week accuracy, accumulated regret, and per-query cost. The learned policy is a **~1.4 MB adapter** served with a bare ~90-token prompt.
+A phone-class 230M model ([LFM2.5-230M](https://huggingface.co/LiquidAI/LFM2.5-230M)) learns your **drifting** notification-triage policy **online** — one `batch_size=1` LoRA update per item via **self-distillation**: the student guesses with a bare prompt, the teacher is the same adapter conditioned on your observed action (open / wait / never), and reverse KL distills teacher → student — **no hand-written gold labels** — beating causal ICL and RAG on whole-week accuracy, accumulated regret, and per-query cost. The learned policy is a **~1.4 MB adapter** served with a bare ~90-token prompt.
 
 ![Whole-week accuracy vs token bill, current-regime tracking, accumulated regret](figures/online_sdft_triage.png)
 
 Companion code for the blog post *"Your phone should learn your attention, not just borrow it"*, using **self-distillation fine-tuning (SDFT)** ([Shenfeld et al., 2026](https://arxiv.org/abs/2601.19897)) run online.
+
+
 
 ## Reproduce
 
@@ -32,7 +34,7 @@ python sweep_sdft.py     # the hyper-parameter sweep that picked the shipped set
 | ------------------------ | -------------------------------------------------------------------------------------------- |
 | `triage_common.py`       | the drifting inbox stream, the 3-way policy, model helpers                                   |
 | `run_baselines.py`       | causal ZS / ICL / RAG arms + both k sweeps → `outputs/baselines.json`                        |
-| `run_sdft.py`            | the online SDFT loop (prequential guess → feedback → update → guardrail) → results + figures |
+| `run_sdft.py`            | the online SDFT loop (student guess → teacher+expert → reverse-KL → guardrail) → results + figures |
 | `sweep_sdft.py`          | the sweep behind the shipped hyper-parameters (regret-primary)                               |
 | `draw_loop_diagram.py`   | the TEACH / CHECK / LEARN loop diagram                                                       |
 | `data/inbox_triage.json` | the seeded dataset (re-exported and verified on every baselines run)                         |
