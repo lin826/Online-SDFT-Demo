@@ -1,15 +1,15 @@
 """Measure on-device serve latency / memory and draw the perf figure.
 
-Uses the already-trained adapter in outputs/adapter-online-sdft and the
-accuracy numbers in outputs/results.json — no full SDFT retrain required.
+Uses the already-trained adapter in outputs/adapter-online-sft and the
+accuracy numbers in outputs/results.json — no full SFT retrain required.
 
-Run after a normal `python run.py` (or run_baselines + run_sdft) once:
+Run after a normal `python run.py` (or run_baselines + run_sft) once:
 
   python run_perf.py
 
 Full pipelines also record these numbers themselves: run_baselines.py writes
-baseline-arm timing into outputs/perf.json; run_sdft.py merges Online-SDFT
-serve + update-step timing and draws figures/online_sdft_perf.png.
+baseline-arm timing into outputs/perf.json; run_sft.py merges Online-SFT
+serve + update-step timing and draws figures/online_sft_perf.png.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from triage_perf import (
     PERF_WARMUP, baseline_demos_fn, benchmark_serve, heldout_msgs,
     make_perf_figure, timed_callable, write_perf,
 )
-from run_sdft import (ADAPTER_DIR, DISTILL_BETA, DISTILL_T, LR, STEPS_PER_ITEM,
+from run_sft import (ADAPTER_DIR, DISTILL_BETA, DISTILL_T, LR, STEPS_PER_ITEM,
                       TEACHER_SHOTS, make_updater)
 
 RESULTS_JSON = OUT_DIR / "results.json"
@@ -38,7 +38,7 @@ def main() -> None:
     if not RESULTS_JSON.exists():
         raise SystemExit(f"{RESULTS_JSON} not found — run `python run.py` first.")
     if not ADAPTER_DIR.exists():
-        raise SystemExit(f"{ADAPTER_DIR} not found — run `python run_sdft.py` first.")
+        raise SystemExit(f"{ADAPTER_DIR} not found — run `python run_sft.py` first.")
 
     results = json.loads(RESULTS_JSON.read_text())
     baselines = (json.loads(BASELINES_JSON.read_text())
@@ -69,15 +69,15 @@ def main() -> None:
             warmup=PERF_WARMUP, label="perf/rag"),
     }
 
-    print("\n== Online-SDFT serve latency / memory ==", flush=True)
+    print("\n== Online-SFT serve latency / memory ==", flush=True)
     model = PeftModel.from_pretrained(base, str(ADAPTER_DIR), is_trainable=True)
-    sdft_serve = benchmark_serve(
+    sft_serve = benchmark_serve(
         model, tok, heldout_msgs(evals, lambda _item: None),
-        warmup=PERF_WARMUP, label="perf/sdft")
-    perf_arms["Online-SDFT"] = sdft_serve
+        warmup=PERF_WARMUP, label="perf/sft")
+    perf_arms["Online-SFT"] = sft_serve
 
     # One update step on a synthetic mini-batch matching the live loop shape.
-    print("\n== SDFT update-step latency ==", flush=True)
+    print("\n== SFT update-step latency ==", flush=True)
     item = stream[-1]
     expert = item["action"]
     history = recent_demos(stream[:-1], TEACHER_SHOTS) if TEACHER_SHOTS else None
@@ -98,7 +98,7 @@ def main() -> None:
         })
     update = make_updater(model, tok, lr=LR,
                           distill_t=DISTILL_T, distill_beta=DISTILL_BETA)
-    sdft_update = timed_callable(
+    sft_update = timed_callable(
         lambda: update(update_batch, STEPS_PER_ITEM),
         device=device, repeats=3, warmup=1)
 
@@ -109,7 +109,7 @@ def main() -> None:
               f"p90={entry['latency_ms_p90']:.0f}ms  "
               f"new_tok~{entry['new_tokens_median']:.0f}  "
               f"RSS={entry['peak_rss_mb']:.0f}MB{device_bit}", flush=True)
-    print(f"  update step     median={sdft_update['latency_ms_median']:.0f}ms  "
+    print(f"  update step     median={sft_update['latency_ms_median']:.0f}ms  "
           f"(steps_per_item={STEPS_PER_ITEM}, batch={len(update_batch)})",
           flush=True)
 
@@ -120,7 +120,7 @@ def main() -> None:
         "warmup": PERF_WARMUP,
         "n_queries": EVAL_N * 3 - PERF_WARMUP,
         "arms": perf_arms,
-        "sdft_update": {**sdft_update,
+        "sft_update": {**sft_update,
                         "steps_per_item": STEPS_PER_ITEM,
                         "batch_size": len(update_batch)},
         "adapter_bytes": adapter_bytes,
@@ -136,7 +136,7 @@ def main() -> None:
             "device": device,
             "warmup": PERF_WARMUP,
             "n_queries": EVAL_N * 3 - PERF_WARMUP,
-            "arms": {k: v for k, v in perf_arms.items() if k != "Online-SDFT"},
+            "arms": {k: v for k, v in perf_arms.items() if k != "Online-SFT"},
         }
         BASELINES_JSON.write_text(json.dumps(baselines, indent=2))
         print(f"wrote {BASELINES_JSON}", flush=True)

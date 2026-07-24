@@ -1,6 +1,6 @@
 """Baseline arms for the continual-triage demo: zero-shot, ICL, and RAG — online.
 
-Every baseline is *causal*, exactly like the SDFT learner: when the stream is
+Every baseline is *causal*, exactly like the SFT learner: when the stream is
 at position t, ICL's context window and RAG's decision store hold only the t
 decisions observed so far — nothing from the future. None of them update any
 weights:
@@ -21,8 +21,8 @@ Three views are computed, matching the blog figure's three panels:
                        predicted BEFORE its label is revealed; same k as A/B
                        (Panel C)
 
-Writes outputs/baselines.json. Run before run_sdft.py,
-which adds the Online-SDFT arm and draws the figure.
+Writes outputs/baselines.json. Run before run_sft.py,
+which adds the Online-SFT arm and draws the figure.
 
 Run:  python run_baselines.py
 """
@@ -43,9 +43,12 @@ from triage_perf import (
 )
 
 # --- baseline knobs --------------------------------------------------------- #
-ICL_K_SWEEP = (3, 6, 9, 12)   # ICL context sizes tried for Panel A
-RAG_K = 6                     # RAG fixed at 6 for accuracy + regret
-CHECKPOINTS = tuple(range(6, STREAM_LEN + 1, 6))   # the grid run_sdft.py probes too
+# ICL_K / RAG_K are the multi-seed regret winners (outputs/regret_sweep.json).
+# ICL_K_SWEEP still probes Panel A accuracy across k; curves + regret use ICL_K.
+ICL_K_SWEEP = (3, 6, 9, 12, 15)
+ICL_K = 15                     # regret-primary (29.4±1.4 vs k=12 at 30.8±1.2)
+RAG_K = 3                      # regret-primary (30.0±1.4 vs k=6 at 35.0±2.4)
+CHECKPOINTS = tuple(range(6, STREAM_LEN + 1, 6))   # the grid run_sft.py probes too
 
 
 def main() -> None:
@@ -53,7 +56,7 @@ def main() -> None:
     device = pick_device()
     print(f"device={device}  model={MODEL_NAME}", flush=True)
 
-    # The same seeded drifting stream and held-out sets run_sdft.py uses.
+    # The same seeded drifting stream and held-out sets run_sft.py uses.
     stream = build_stream(random.Random(SEED))
     evals = {phase: build_eval(random.Random(SEED + phase), phase) for phase in (1, 2, 3)}
 
@@ -96,15 +99,17 @@ def main() -> None:
                                   for regime in REGIMES)
         print(f"  ICL k={k:2d}: mean={entry['acc_mean']:.2f}  ({regime_report})  "
               f"tok/query={entry['tok_per_query']:.0f}", flush=True)
-    icl_k = max(ICL_K_SWEEP, key=lambda k: (sweeps["ICL"][k]["acc_mean"], -k))  # ties -> cheaper
+    acc_icl_k = max(ICL_K_SWEEP, key=lambda k: (sweeps["ICL"][k]["acc_mean"], -k))
     sweeps["RAG"][RAG_K] = eval_arm("RAG", RAG_K, STREAM_LEN, f"rag k={RAG_K}")
     rag_entry = sweeps["RAG"][RAG_K]
     rag_report = "  ".join(f"{regime}={rag_entry['acc_by_regime'][regime]:.2f}"
                            for regime in REGIMES)
     print(f"  RAG k={RAG_K:2d}: mean={rag_entry['acc_mean']:.2f}  ({rag_report})  "
           f"tok/query={rag_entry['tok_per_query']:.0f}", flush=True)
-    rag_k = RAG_K
-    print(f"  using: ICL k={icl_k}, RAG k={rag_k}", flush=True)
+    # Curves + regret use the multi-seed regret winners (not Panel-A argmax).
+    icl_k, rag_k = ICL_K, RAG_K
+    print(f"  Panel-A accuracy-best ICL k={acc_icl_k}; "
+          f"using regret-primary ICL k={icl_k}, RAG k={rag_k}", flush=True)
 
     print("\n== zero-shot arm ==", flush=True)
     zs_arm = eval_arm(None, 0, 0, "zs")
@@ -154,7 +159,7 @@ def main() -> None:
 
     # The qualitative drifted items — off-hours `social` pushes that should now
     # INTERRUPT. Capture every candidate's baseline replies (end-of-week
-    # history); run_sdft.py picks the one the served adapter gets right.
+    # history); run_sft.py picks the one the served adapter gets right.
     social_items = [item for item in evals[3] if item["category"] == "social"]
     qualitative = [{
         "item": item,
@@ -194,7 +199,7 @@ def main() -> None:
               f"RSS={entry['peak_rss_mb']:.0f}MB{device_bit}", flush=True)
     perf = {"device": device, "warmup": PERF_WARMUP,
             "n_queries": EVAL_N * 3 - PERF_WARMUP, "arms": perf_arms}
-    write_perf(perf)   # baselines-only snapshot; run_sdft.py merges Online-SDFT
+    write_perf(perf)   # baselines-only snapshot; run_sft.py merges Online-SFT
 
     baselines = {
         "config": {"model": MODEL_NAME, "seed": SEED, "stream_len": STREAM_LEN,

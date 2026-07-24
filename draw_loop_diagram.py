@@ -1,11 +1,11 @@
-"""Draw the online-SDFT loop diagram for the blog post.
+"""Draw the online-SFT loop diagram for the blog post.
 
 One model, two roles: the student makes a bare-prompt call (TEACH), your
 behavior is the expert demonstration that conditions the teacher (CHECK), and
-a few batch_size=1 LoRA steps soft-CE distill teacher → student (LEARN).
+a few batch_size=1 LoRA steps with CE on the observed action (LEARN).
 The TEACH / CHECK / LEARN diagram embedded in the accompanying blog post.
 
-Writes figures/online_sdft_loop.png.
+Writes figures/online_sft_loop.png.
 
 Run:  python draw_loop_diagram.py
 """
@@ -86,10 +86,9 @@ def main() -> None:
     ax.set_ylim(-2.4, 26.8)
     ax.axis("off")
 
-    ax.text(1.0, 23.7, "One model, two roles — the online SDFT loop",
+    ax.text(1.0, 23.7, "One model, two roles — the online SFT loop",
             fontsize=11.5, fontweight="bold", color="#202124", va="top")
-    ax.text(1.0, 21.9, "teacher and student are the same 230M network; "
-                       "expert action conditions the teacher",
+    ax.text(1.0, 21.9, "same 230M network; observe your action, then LoRA CE",
             fontsize=8.8, color=GREY, va="top")
 
     box(ax, 1.5, 11.5, 17.0, 6.4, GREY, "INCOMING ITEM",
@@ -102,10 +101,10 @@ def main() -> None:
                                 boxstyle="round,pad=0.02,rounding_size=0.55",
                                 linewidth=1.5, edgecolor=PURPLE, facecolor="white",
                                 zorder=1))
-    ax.text(41.0, 0.3 + 6.4 + 0.5, "LEARN — soft-CE distill", ha="center", va="bottom",
+    ax.text(41.0, 0.3 + 6.4 + 0.5, "LEARN — LoRA CE update", ha="center", va="bottom",
             fontsize=9.5, fontweight="bold", color=PURPLE, zorder=4)
     ax.text(36.0, 0.3 + 6.4 / 2,
-            "LoRA steps: teacher → student\n(+ replay per other class)",
+            "LoRA steps: CE on observed action\n(+ replay per other class)",
             ha="center", va="center", fontsize=8.5, color="#202124", zorder=4,
             linespacing=1.15)
 
@@ -123,7 +122,7 @@ def main() -> None:
             fontsize=7.4, color=GREEN)
     ax.text(61.5, 8.1, "(your open / wait / never)", ha="center", va="center",
             fontsize=7.4, color=RED)
-    ax.text(61.5, 6.5, "soft teacher targets —\nnot hard SFT labels", ha="center",
+    ax.text(61.5, 6.5, "hard CE on your action\n(optional soft distill)", ha="center",
             va="top", fontsize=7.0, color=GREY, style="italic", linespacing=1.05)
 
     # Tip under TEACH bottom; steep exit so the -|> head reads as a triangle
@@ -136,7 +135,7 @@ def main() -> None:
     ax.text(36, -2.2, " ", fontsize=1, alpha=0)
 
     fig.subplots_adjust(left=0.01, right=0.99, top=0.99, bottom=0.01)
-    out = FIG_DIR / "online_sdft_loop.png"
+    out = FIG_DIR / "online_sft_loop.png"
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=180, bbox_inches="tight", pad_inches=0.28)
     print("wrote", out)

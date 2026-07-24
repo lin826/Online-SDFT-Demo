@@ -1,14 +1,13 @@
-"""Online SDFT on the drifting inbox stream — the loop the blog post describes.
+"""Online SFT on the drifting inbox stream — the loop the blog post describes.
 
 The steps, exactly as in the accompanying blog post:
 
   1. A tiny dataset: a stream that drifts twice
        seeded synthetic inbox; the 3-way policy flips at DRIFTS (triage_common)
   2. The online loop, one item at a time (prequential: test, THEN train)
-       Student (bare prompt) guesses first — scored for regret BEFORE feedback.
-       Teacher is the same adapter conditioned on the expert action (your
-       observed behavior). Distill teacher → student with hard CE + temp-soft
-       KL on the completion tokens (SDFT), batch_size=1 with replay.
+       Serve with a bare prompt first — scored for regret BEFORE feedback.
+       Then LoRA-update with hard CE on the observed action tokens
+       (optional soft-distill term via DISTILL_BETA), batch_size=1 with replay.
   3. The probe guardrail: keep the best adapter on the current regime
   4. Serving: bare prompt — the adapter carries the policy
 
@@ -16,7 +15,7 @@ Reads outputs/baselines.json (run run_baselines.py
 first) and writes results.json, the trained adapter, and the blog figures:
 A/B/C accuracy panels plus D/E on-device latency / latency-vs-accuracy.
 
-Run:  python run_sdft.py
+Run:  python run_sft.py
 """
 
 from __future__ import annotations
@@ -49,29 +48,26 @@ LORA_R = 8                                       # adapter rank (~1.4 MB on disk
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
 LORA_TARGET = r".*self_attn\.(q|k|v|out)_proj"   # LFM2 attention projections
-LR = 7e-4            # one persistent AdamW across the whole stream: the completion
-                     # is 1-2 tokens (tiny loss), so it wants a larger step than a
-                     # scheduled batch trainer — but 1e-3 overshoots on the live
-                     # stream (regret 28 vs 18) and 2e-3 collapses outright
+LR = 5e-4            # multi-seed regret winner (outputs/regret_sweep.json): 5e-4 /
+                     # hard-CE beats shipped 7e-4 + β=0.25 (22.0±3.5 vs ~24 seed-7)
 REPLAY = 16          # sliding replay-buffer size (items; 32 drowns the fresh item)
 STEPS_PER_ITEM = 8   # batch_size=1 update steps per incoming item — 3-way wants
                      # more gradient than binary (3 stalls on the cold start)
 TEACHER_SHOTS = 0    # extra history demos in the teacher context (beyond expert)
 DISTILL_T = 3.0      # temperature for the teacher→student soft-CE term
-DISTILL_BETA = 0.25  # weight on that term (0 = hard CE only; pure soft CE collapses)
+DISTILL_BETA = 0.0   # 0 = hard CE only (multi-seed regret winner; soft KL hurt)
 CHECKPOINTS = tuple(range(6, STREAM_LEN + 1, 6))   # eval every 6 streamed items
 
-ADAPTER_DIR = OUT_DIR / "adapter-online-sdft"
+ADAPTER_DIR = OUT_DIR / "adapter-online-sft"
 
 
 def make_updater(model, tok, lr: float = LR,
                  distill_t: float = DISTILL_T, distill_beta: float = DISTILL_BETA):
-    """Persistent AdamW + SDFT teacher→student distill.
+    """Persistent AdamW online SFT updater (hard CE + optional soft distill).
 
-    Teacher (no grad) is the same adapter conditioned on the expert action;
-    student is the bare serving prompt. Loss = hard CE on the expert-action
-    tokens under the student prompt (stable on 1–2-token labels) + a
-    temperature-softened forward-KL to the teacher (the distill term).
+    Loss = hard CE on the observed-action tokens under the bare serving prompt
+    (stable on 1–2-token labels). When distill_beta > 0, add a temperature-
+    softened forward-KL to a no-grad teacher conditioned on the expert action.
     Pure full-vocab soft CE collapses this 230M to a first-token loop.
     """
     trainable = [p for p in model.parameters() if p.requires_grad]
@@ -154,12 +150,11 @@ def main() -> None:
     tok = load_tokenizer()
     base = load_base_model(device)
 
-    # -- 2+3. the online loop: student guess -> teacher distill -> update ----- #
-    # Prequential (test-then-train): STUDENT (bare prompt) guesses first — that
-    # prediction feeds the regret curve — then TEACHER (same adapter + expert
-    # action as in-context demo) provides the soft target and we soft-CE
-    # distill into the student. Baselines get the same causal history.
-    print("\n== online SDFT: student guesses bare, teacher sees expert action ==",
+    # -- 2+3. the online loop: serve → observe → CE update -------------------- #
+    # Prequential (test-then-train): bare prompt guesses first — that prediction
+    # feeds the regret curve — then LoRA CE on the observed action (optional
+    # soft distill when DISTILL_BETA > 0). Baselines get the same causal history.
+    print("\n== online SFT: bare serve, then CE on observed action ==",
           flush=True)
     model = get_peft_model(base, LoraConfig(
         r=LORA_R, lora_alpha=LORA_ALPHA, lora_dropout=LORA_DROPOUT,
@@ -171,7 +166,7 @@ def main() -> None:
             model, tok, [build_msgs(item) for item in evals[phase]], label=label))
 
     curve = {"pos": [], "acc_p1": [], "acc_p2": [], "acc_p3": []}
-    sdft_regret = [0]
+    sft_regret = [0]
     rows: list[dict] = []
     replay_buffer: list[dict] = []
     sampler = random.Random(SEED)
@@ -192,7 +187,7 @@ def main() -> None:
                "action": expert, "pred": prediction,
                "feedback": int(prediction == expert)}
         rows.append(row)
-        sdft_regret.append(sdft_regret[-1] + 1 - row["feedback"])
+        sft_regret.append(sft_regret[-1] + 1 - row["feedback"])
 
         replay_buffer = (replay_buffer + [row])[-REPLAY:]
         # pair the fresh item with one replayed item from EACH other class, so
@@ -210,18 +205,18 @@ def main() -> None:
             curve["pos"].append(pos)
             for phase in (1, 2, 3):
                 curve[f"acc_p{phase}"].append(
-                    heldout_accuracy(phase, f"sdft@{pos}/p{phase}"))
+                    heldout_accuracy(phase, f"sft@{pos}/p{phase}"))
             report = "  ".join(f"{regime}={curve[f'acc_p{phase}'][-1]:.2f}"
                                for phase, regime in zip((1, 2, 3), REGIMES))
             print(f"  checkpoint {pos}: {report}  (stream mistakes so far: "
-                  f"{sdft_regret[-1]}/{pos})", flush=True)
+                  f"{sft_regret[-1]}/{pos})", flush=True)
             if pos > DRIFTS[1] and curve["acc_p3"][-1] >= best["acc"]:
                 best = {"acc": curve["acc_p3"][-1], "pos": pos,
                         "state": copy.deepcopy(get_peft_model_state_dict(model))}
 
     n_reinforced = sum(row["feedback"] for row in rows)
     reinforce_frac = n_reinforced / len(rows)
-    with (OUT_DIR / "sdft_targets.jsonl").open("w") as fh:
+    with (OUT_DIR / "sft_targets.jsonl").open("w") as fh:
         for row in rows:
             # teacher_msgs are bulky; log the distillable fields only
             fh.write(json.dumps({k: row[k] for k in
@@ -256,10 +251,10 @@ def main() -> None:
         item = candidate["item"]
         assert candidate["prompt"] == render_prompt(item), \
             "baselines.json is stale — re-run run_baselines.py"
-        reply = generate(model, tok, [build_msgs(item)], label="q/sdft", batch_size=1)[0]
+        reply = generate(model, tok, [build_msgs(item)], label="q/sft", batch_size=1)[0]
         picked = {"prompt": candidate["prompt"], "gold": candidate["gold"],
                   "zs": candidate["zs"], "icl": candidate["icl"],
-                  "rag": candidate["rag"], "sdft": reply}
+                  "rag": candidate["rag"], "sft": reply}
         if qualitative is None:
             qualitative = picked                     # fallback: first candidate
         if (parse_action(reply) == item["action"]
@@ -268,17 +263,17 @@ def main() -> None:
             break
 
     arms = {name: dict(arm) for name, arm in baselines["arms"].items()}
-    arms["Online-SDFT"] = {
+    arms["Online-SFT"] = {
         "acc_by_regime": served, "acc_mean": served_mean,   # week-END adapter, re-graded
         "tok_per_query": arms["ZS"]["tok_per_query"],       # served bare
         "labels_needed": 0,
     }
 
-    # Panel B curve for SDFT: held-out accuracy on the regime that is current at
+    # Panel B curve for SFT: held-out accuracy on the regime that is current at
     # each checkpoint; position 0 (nothing streamed, adapter still identity) is
     # exactly the zero-shot value — every method starts from the same point.
     curves = dict(baselines["curves"])
-    curves["SDFT"] = [curves["zs_by_phase"][REGIMES[0]]] + [
+    curves["SFT"] = [curves["zs_by_phase"][REGIMES[0]]] + [
         curve[f"acc_p{phase_of(pos)}"][idx] for idx, pos in enumerate(curve["pos"])]
 
     # Panel A grades the week AS LIVED: each regime scored while it is live (its
@@ -287,7 +282,7 @@ def main() -> None:
     # "and if you froze Friday's context and re-graded the whole week" number.
     block_ends = [*DRIFTS, STREAM_LEN]
     for name, key in (("ZS", "ZS"), (f"ICL k={config['icl_k']}", "ICL"),
-                      (f"RAG k={config['rag_k']}", "RAG"), ("Online-SDFT", "SDFT")):
+                      (f"RAG k={config['rag_k']}", "RAG"), ("Online-SFT", "SFT")):
         live = {regime: (curves["zs_by_phase"][regime] if key == "ZS"
                          else curves[key][curves["pos"].index(pos)])
                 for pos, regime in zip(block_ends, REGIMES)}
@@ -295,44 +290,44 @@ def main() -> None:
         arms[name]["acc_mean_live"] = sum(live.values()) / len(live)
 
     regret = dict(baselines["regret"])
-    regret["SDFT"] = sdft_regret
+    regret["SFT"] = sft_regret
 
-    # -- on-device serve latency / memory + one SDFT update step --------------- #
+    # -- on-device serve latency / memory + one SFT update step --------------- #
     print("\n== serve latency / memory (held-out batch, after warmup) ==", flush=True)
-    sdft_serve = benchmark_serve(
+    sft_serve = benchmark_serve(
         model, tok, heldout_msgs(evals, lambda _item: None),
-        warmup=PERF_WARMUP, label="perf/sdft")
-    print(f"  Online-SDFT  median={sdft_serve['latency_ms_median']:.0f}ms  "
-          f"p90={sdft_serve['latency_ms_p90']:.0f}ms  "
-          f"new_tok~{sdft_serve['new_tokens_median']:.0f}  "
-          f"RSS={sdft_serve['peak_rss_mb']:.0f}MB", flush=True)
+        warmup=PERF_WARMUP, label="perf/sft")
+    print(f"  Online-SFT  median={sft_serve['latency_ms_median']:.0f}ms  "
+          f"p90={sft_serve['latency_ms_p90']:.0f}ms  "
+          f"new_tok~{sft_serve['new_tokens_median']:.0f}  "
+          f"RSS={sft_serve['peak_rss_mb']:.0f}MB", flush=True)
 
     # One online update step on a fresh+replay-style mini-batch (same shape as
     # the live loop) — the recurring train cost the phone pays per notification.
-    print("\n== SDFT update-step latency ==", flush=True)
+    print("\n== SFT update-step latency ==", flush=True)
     sample_row = rows[-1]
     update_batch = [sample_row]
     for action in ACTIONS:
         pool = [b for b in rows[:-1] if b["action"] == action]
         if action != sample_row["action"] and pool:
             update_batch.append(pool[-1])
-    sdft_update = timed_callable(
+    sft_update = timed_callable(
         lambda: update(update_batch, STEPS_PER_ITEM),
         device=device, repeats=3, warmup=1)
-    print(f"  update median={sdft_update['latency_ms_median']:.0f}ms  "
+    print(f"  update median={sft_update['latency_ms_median']:.0f}ms  "
           f"(steps_per_item={STEPS_PER_ITEM}, batch={len(update_batch)})",
           flush=True)
 
     perf = dict(baselines.get("perf") or {})
     perf_arms = dict(perf.get("arms") or {})
-    perf_arms["Online-SDFT"] = sdft_serve
+    perf_arms["Online-SFT"] = sft_serve
     perf = {
         **perf,
         "device": device,
         "warmup": PERF_WARMUP,
         "n_queries": len(evals[1]) + len(evals[2]) + len(evals[3]) - PERF_WARMUP,
         "arms": perf_arms,
-        "sdft_update": {**sdft_update,
+        "sft_update": {**sft_update,
                         "steps_per_item": STEPS_PER_ITEM,
                         "batch_size": len(update_batch)},
         "adapter_bytes": adapter_bytes,
@@ -350,7 +345,7 @@ def main() -> None:
         "curve": curve,
         "curves": curves,
         "regret": regret,
-        "sdft_best": {"pos": best["pos"], "acc": best["acc"]},
+        "sft_best": {"pos": best["pos"], "acc": best["acc"]},
         "qualitative": qualitative,
         "adapter_bytes": adapter_bytes,
         # fraction of stream where the bare student already matched the expert
@@ -379,7 +374,7 @@ def make_figure(results: dict) -> None:
     icl_name = f"ICL k={results['config']['icl_k']}"
     rag_name = f"RAG k={results['config']['rag_k']}"
     zs_tokens = arms["ZS"]["tok_per_query"]
-    colors = {"ZS": "#9aa0a6", "ICL": "#e8710a", "RAG": "#d93025", "Online-SDFT": "#1a73e8"}
+    colors = {"ZS": "#9aa0a6", "ICL": "#e8710a", "RAG": "#d93025", "Online-SFT": "#1a73e8"}
 
     def arm_color(name: str) -> str:
         for prefix, color in colors.items():
@@ -416,22 +411,22 @@ def make_figure(results: dict) -> None:
     for (start, end), regime in zip(zip([0, *drifts], [*drifts, stream_len]), REGIMES):
         ax_drift.hlines(curves["zs_by_phase"][regime] * 100, start, end,
                         color=colors["ZS"], ls=":", lw=1.6, zorder=1)
-    for key, name in (("SDFT", "Online-SDFT"), ("ICL", icl_name), ("RAG", rag_name)):
+    for key, name in (("SFT", "Online-SFT"), ("ICL", icl_name), ("RAG", rag_name)):
         ax_drift.plot(curves["pos"], [v * 100 for v in curves[key]], "-o",
-                      color=colors[key if key != "SDFT" else "Online-SDFT"],
-                      lw=2.6 if key == "SDFT" else 1.8,
-                      ms=5 if key == "SDFT" else 3.8,
-                      alpha=1.0 if key == "SDFT" else 0.85, zorder=4 if key == "SDFT" else 3)
-    kept = results.get("sdft_best") or {}
+                      color=colors[key if key != "SFT" else "Online-SFT"],
+                      lw=2.6 if key == "SFT" else 1.8,
+                      ms=5 if key == "SFT" else 3.8,
+                      alpha=1.0 if key == "SFT" else 0.85, zorder=4 if key == "SFT" else 3)
+    kept = results.get("sft_best") or {}
     if kept.get("pos"):   # star the checkpoint the probe guardrail serves
         ax_drift.scatter([kept["pos"]], [kept["acc"] * 100], marker="*", s=300,
-                         color=colors["Online-SDFT"], edgecolor="white",
+                         color=colors["Online-SFT"], edgecolor="white",
                          linewidth=1.2, zorder=5)
         near_top = kept["acc"] > 0.88          # dodge below the star near the ceiling
         ax_drift.annotate("probe keeps\nthis adapter", (kept["pos"], kept["acc"] * 100),
                           textcoords="offset points",
                           xytext=(0, -24 if near_top else 10), fontsize=7.5,
-                          color=colors["Online-SDFT"], ha="center", fontweight="bold")
+                          color=colors["Online-SFT"], ha="center", fontweight="bold")
 
     # Per-phase sub-titles along the x-axis (neutral grey: the curves are
     # methods now, not regimes).
@@ -446,8 +441,8 @@ def make_figure(results: dict) -> None:
     # B ships standalone on the blog too, so it carries its own compact legend.
     from matplotlib.lines import Line2D
     ax_drift.legend(handles=[
-        Line2D([], [], color=colors["Online-SDFT"], lw=2.6, marker="o", ms=5,
-               label="Online-SDFT"),
+        Line2D([], [], color=colors["Online-SFT"], lw=2.6, marker="o", ms=5,
+               label="Online-SFT"),
         Line2D([], [], color=colors["ICL"], lw=1.8, marker="o", ms=3.8, label=icl_name),
         Line2D([], [], color=colors["RAG"], lw=1.8, marker="o", ms=3.8, label=rag_name),
         Line2D([], [], color=colors["ZS"], ls=":", lw=1.6, label="zero-shot floor"),
@@ -467,12 +462,12 @@ def make_figure(results: dict) -> None:
     series = (("ZS", "ZS", ":"),
               ("ICL", icl_name, "-"),
               ("RAG", rag_name, "-"),
-              ("SDFT", "Online-SDFT", "-"))
+              ("SFT", "Online-SFT", "-"))
     for key, name, style in series:
-        color = colors[key if key != "SDFT" else "Online-SDFT"]
+        color = colors[key if key != "SFT" else "Online-SFT"]
         ax_regret.plot(regret["pos"], regret[key], style, drawstyle="steps-post",
-                       color=color, lw=2.6 if key == "SDFT" else 1.8, label=name,
-                       zorder=4 if key == "SDFT" else 3)
+                       color=color, lw=2.6 if key == "SFT" else 1.8, label=name,
+                       zorder=4 if key == "SFT" else 3)
         ax_regret.annotate(str(regret[key][-1]), (stream_len, regret[key][-1]),
                            textcoords="offset points", xytext=(6, -3), fontsize=9,
                            color=color, fontweight="bold")
@@ -490,7 +485,7 @@ def make_figure(results: dict) -> None:
         f"{adapter_mb:.1f} MB LoRA adapter, no gold labels",
         fontsize=12.5, fontweight="bold", y=1.02)
     fig.tight_layout()
-    out = FIG_DIR / "online_sdft_triage.png"
+    out = FIG_DIR / "online_sft_triage.png"
     fig.savefig(out, dpi=150, bbox_inches="tight")
     print("wrote", out, flush=True)
 
@@ -500,7 +495,7 @@ def make_figure(results: dict) -> None:
     for ax, suffix in ((ax_cost, "a"), (ax_drift, "b"), (ax_regret, "c")):
         extent = (ax.get_tightbbox(renderer)
                   .transformed(fig.dpi_scale_trans.inverted()))
-        panel_out = FIG_DIR / f"online_sdft_triage_{suffix}.png"
+        panel_out = FIG_DIR / f"online_sft_triage_{suffix}.png"
         fig.savefig(panel_out, dpi=150, bbox_inches=extent.expanded(1.02, 1.04))
         print("wrote", panel_out, flush=True)
 

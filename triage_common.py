@@ -4,11 +4,11 @@ The synthetic drifting inbox, the (category, regime) policy, prompt rendering, a
 the LFM2.5-230M model helpers used by both entry points:
 
   run_baselines.py   ZS / ICL / RAG arms (+ both k sweeps) -> outputs/baselines.json
-  run_sdft.py        the online SDFT loop -> outputs/results.json + the figures
+  run_sft.py        the online SFT loop -> outputs/results.json + the figures
 
 Every hyper-parameter sits at the top of its file, right after the imports —
 shared data/model knobs here, baseline knobs in run_baselines.py, training knobs
-in run_sdft.py.
+in run_sft.py.
 """
 
 from __future__ import annotations
@@ -207,7 +207,7 @@ def phase_of(pos: int) -> int:
 
 def recent_demos(history: list[dict], k: int) -> list[tuple[dict, str]]:
     """The k most recent observed decisions, oldest first — the causal ICL
-    context (and optional history prepended to the SDFT teacher chat)."""
+    context (and optional history prepended to the SFT teacher chat)."""
     return [(item, item["action"]) for item in history[-k:]]
 
 
@@ -234,6 +234,9 @@ def export_dataset(stream: list[dict], evals: dict[int, list[dict]]) -> None:
 # Model helpers
 # --------------------------------------------------------------------------- #
 def pick_device() -> str:
+    forced = os.environ.get("FORCE_DEVICE", "").strip().lower()
+    if forced in {"cpu", "mps", "cuda"}:
+        return forced
     if torch.cuda.is_available():
         return "cuda"
     if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
@@ -279,8 +282,8 @@ def build_teacher_msgs(item: dict, expert_action: str,
     """Teacher chat: same model, privileged with the expert (user) action.
 
     Shows the user's actual behavior for this item as an in-context demonstration,
-    then re-asks the bare triage question so the teacher produces π(·|x, c) —
-    the SDFT teacher of Shenfeld et al., with c = observed user behavior.
+    then re-asks the bare triage question so the teacher produces π(·|x, c)
+    with c = observed user behavior (used only when DISTILL_BETA > 0).
     Optional `demos` are older causal decisions prepended before that demo.
     """
     messages: list[dict] = []

@@ -2,7 +2,7 @@
 
 Measures wall-clock per-query serve latency (device-synced) and peak process /
 accelerator memory on a fixed held-out batch after warmup. Shared by
-run_baselines.py and run_sdft.py; numbers land in outputs/perf.json (and are
+run_baselines.py and run_sft.py; numbers land in outputs/perf.json (and are
 merged into baselines.json / results.json).
 """
 
@@ -26,7 +26,7 @@ from triage_common import (
 
 PERF_JSON = OUT_DIR / "perf.json"
 PERF_WARMUP = 2          # discarded timed calls before the measured batch
-PERF_FIG = FIG_DIR / "online_sdft_perf.png"
+PERF_FIG = FIG_DIR / "online_sft_perf.png"
 
 
 def sync_device(device: str) -> None:
@@ -155,7 +155,7 @@ def benchmark_serve(model, tok, msgs_list: list[list[dict]], *,
 
 def timed_callable(fn: Callable[[], None], *, device: str, repeats: int = 3,
                    warmup: int = 1) -> dict:
-    """Time an arbitrary side-effecting step (e.g. one SDFT update) with sync."""
+    """Time an arbitrary side-effecting step (e.g. one SFT update) with sync."""
     for _ in range(warmup):
         sync_device(device)
         fn()
@@ -219,7 +219,7 @@ def make_perf_figure(results: dict, perf: dict,
 
     arms = results["arms"]
     colors = {"ZS": "#9aa0a6", "ICL": "#e8710a", "RAG": "#d93025",
-              "Online-SDFT": "#1a73e8"}
+              "Online-SFT": "#1a73e8"}
 
     def arm_color(name: str) -> str:
         for prefix, color in colors.items():
@@ -253,13 +253,13 @@ def make_perf_figure(results: dict, perf: dict,
     ax_lat.set_ylim(0, max(latencies) * 1.28)
     ax_lat.grid(True, axis="y", alpha=0.25, zorder=0)
 
-    update = perf.get("sdft_update")
-    if update and "Online-SDFT" in names:
-        note = (f"Online-SDFT update step (median): "
+    update = perf.get("sft_update")
+    if update and "Online-SFT" in names:
+        note = (f"Online-SFT update step (median): "
                 f"{update['latency_ms_median']:.0f} ms "
-                f"· peak RSS {perf['arms']['Online-SDFT']['peak_rss_mb']:.0f} MB")
+                f"· peak RSS {perf['arms']['Online-SFT']['peak_rss_mb']:.0f} MB")
         ax_lat.text(0.5, -0.18, note, transform=ax_lat.transAxes, ha="center",
-                    fontsize=8.5, color=colors["Online-SDFT"], style="italic")
+                    fontsize=8.5, color=colors["Online-SFT"], style="italic")
 
     # --- right: latency vs whole-week live accuracy (mirrors panel A) --- #
     for name in names:
