@@ -1,10 +1,10 @@
 {
  "config": {
   "seed": 7,
-  "stream_len": 60,
+  "stream_len": 100,
   "drifts": [
-   30,
-   42
+   35,
+   70
   ],
   "regimes": [
    "weekday",
@@ -20,20 +20,36 @@
  },
  "stream": [
   {
-   "subject": "fyi / no rush FROM Diego",
-   "snippet": "Left a couple of comments on your PR whenever you get a sec.",
-   "category": "teammate_fyi",
+   "subject": "Your payment to the mobile app was successful",
+   "snippet": "Your invoice is attached. No action required.",
+   "category": "receipt",
    "phase": 1,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Diego\nLeft a couple of comments on your PR whenever you get a sec."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to the mobile app was successful\nYour invoice is attached. No action required."
   },
   {
-   "subject": "Starts in 20 min: 1:1 with Diego",
-   "snippet": "Reminder: your meeting with Diego begins soon.",
+   "subject": "You have 3 new followers",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 1,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: You have 3 new followers\nTap to see the activity."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Yuki",
+   "snippet": "Reminder: your meeting with Yuki begins soon.",
    "category": "calendar_soon",
    "phase": 1,
    "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Diego\nReminder: your meeting with Diego begins soon."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Yuki\nReminder: your meeting with Yuki begins soon."
+  },
+  {
+   "subject": "Your payment to Nimbus was successful",
+   "snippet": "Charge confirmed. View your billing history anytime.",
+   "category": "receipt",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Nimbus was successful\nCharge confirmed. View your billing history anytime."
   },
   {
    "subject": "Need your call on the billing rewrite FROM Lena",
@@ -44,28 +60,12 @@
    "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the billing rewrite FROM Lena\nQuick decision needed on the billing rewrite \u2014 reviewers are waiting on you."
   },
   {
-   "subject": "Your payment to the mobile app was successful",
-   "snippet": "Payment of $12.00 received. Thanks for your order.",
-   "category": "receipt",
+   "subject": "Someone mentioned you in a comment",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
    "phase": 1,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to the mobile app was successful\nPayment of $12.00 received. Thanks for your order."
-  },
-  {
-   "subject": "fyi / no rush FROM Yuki",
-   "snippet": "Left a couple of comments on your PR whenever you get a sec.",
-   "category": "teammate_fyi",
-   "phase": 1,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Yuki\nLeft a couple of comments on your PR whenever you get a sec."
-  },
-  {
-   "subject": "Need your call on Atlas FROM Diego",
-   "snippet": "Can you weigh in before the standup? It's blocking Atlas.",
-   "category": "mgr_project",
-   "phase": 1,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Diego\nCan you weigh in before the standup? It's blocking Atlas."
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
   },
   {
    "subject": "Someone mentioned you in a comment",
@@ -76,118 +76,6 @@
    "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
   },
   {
-   "subject": "Starts in 20 min: 1:1 with Yuki",
-   "snippet": "Reminder: your meeting with Yuki begins soon.",
-   "category": "calendar_soon",
-   "phase": 1,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Yuki\nReminder: your meeting with Yuki begins soon."
-  },
-  {
-   "subject": "Need your call on Atlas FROM Marcus",
-   "snippet": "Are we shipping Atlas today? Need your sign-off.",
-   "category": "mgr_project",
-   "phase": 1,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Marcus\nAre we shipping Atlas today? Need your sign-off."
-  },
-  {
-   "subject": "Your payment to Zephyr was successful",
-   "snippet": "Your invoice is attached. No action required.",
-   "category": "receipt",
-   "phase": 1,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Zephyr was successful\nYour invoice is attached. No action required."
-  },
-  {
-   "subject": "Need your call on Atlas FROM Yuki",
-   "snippet": "Quick decision needed on Atlas \u2014 reviewers are waiting on you.",
-   "category": "mgr_project",
-   "phase": 1,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Yuki\nQuick decision needed on Atlas \u2014 reviewers are waiting on you."
-  },
-  {
-   "subject": "[ALERT] elevated error rate",
-   "snippet": "elevated error rate on the checkout service. Auto-generated.",
-   "category": "monitoring",
-   "phase": 1,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] elevated error rate\nelevated error rate on the checkout service. Auto-generated."
-  },
-  {
-   "subject": "You have 3 new followers",
-   "snippet": "Tap to see the activity.",
-   "category": "social",
-   "phase": 1,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: You have 3 new followers\nTap to see the activity."
-  },
-  {
-   "subject": "[ALERT] payment gateway timeouts",
-   "snippet": "Automated alert: payment gateway timeouts detected in production.",
-   "category": "monitoring",
-   "phase": 1,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] payment gateway timeouts\nAutomated alert: payment gateway timeouts detected in production."
-  },
-  {
-   "subject": "We miss you! Come back for 20% off FROM Nimbus Team",
-   "snippet": "Limited time only. Unsubscribe anytime.",
-   "category": "promo",
-   "phase": 1,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: We miss you! Come back for 20% off FROM Nimbus Team\nLimited time only. Unsubscribe anytime."
-  },
-  {
-   "subject": "Your payment to Kettle was successful",
-   "snippet": "Payment of $12.00 received. Thanks for your order.",
-   "category": "receipt",
-   "phase": 1,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Kettle was successful\nPayment of $12.00 received. Thanks for your order."
-  },
-  {
-   "subject": "Your payment to Zephyr was successful",
-   "snippet": "Payment of $12.00 received. Thanks for your order.",
-   "category": "receipt",
-   "phase": 1,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Zephyr was successful\nPayment of $12.00 received. Thanks for your order."
-  },
-  {
-   "subject": "[ALERT] elevated error rate",
-   "snippet": "elevated error rate on the checkout service. Auto-generated.",
-   "category": "monitoring",
-   "phase": 1,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] elevated error rate\nelevated error rate on the checkout service. Auto-generated."
-  },
-  {
-   "subject": "New features you'll love FROM the mobile app Team",
-   "snippet": "Limited time only. Unsubscribe anytime.",
-   "category": "promo",
-   "phase": 1,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: New features you'll love FROM the mobile app Team\nLimited time only. Unsubscribe anytime."
-  },
-  {
-   "subject": "Need your call on Atlas FROM Tom",
-   "snippet": "Are we shipping Atlas today? Need your sign-off.",
-   "category": "mgr_project",
-   "phase": 1,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Tom\nAre we shipping Atlas today? Need your sign-off."
-  },
-  {
-   "subject": "[ALERT] a pager alert",
-   "snippet": "Automated alert: a pager alert detected in production.",
-   "category": "monitoring",
-   "phase": 1,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] a pager alert\nAutomated alert: a pager alert detected in production."
-  },
-  {
    "subject": "Starts in 20 min: 1:1 with Marcus",
    "snippet": "Reminder: your meeting with Marcus begins soon.",
    "category": "calendar_soon",
@@ -196,44 +84,12 @@
    "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Marcus\nReminder: your meeting with Marcus begins soon."
   },
   {
-   "subject": "Starts in 20 min: 1:1 with Marcus",
-   "snippet": "Reminder: your meeting with Marcus begins soon.",
-   "category": "calendar_soon",
-   "phase": 1,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Marcus\nReminder: your meeting with Marcus begins soon."
-  },
-  {
-   "subject": "Starts in 20 min: 1:1 with Priya",
-   "snippet": "Reminder: your meeting with Priya begins soon.",
-   "category": "calendar_soon",
-   "phase": 1,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Priya\nReminder: your meeting with Priya begins soon."
-  },
-  {
-   "subject": "fyi / no rush FROM Priya",
-   "snippet": "Thinking about refactoring the utils, curious what you think sometime.",
-   "category": "teammate_fyi",
-   "phase": 1,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Priya\nThinking about refactoring the utils, curious what you think sometime."
-  },
-  {
-   "subject": "Someone mentioned you in a comment",
-   "snippet": "Tap to see the activity.",
-   "category": "social",
+   "subject": "We miss you! Come back for 20% off FROM the mobile app Team",
+   "snippet": "Limited time only. Unsubscribe anytime.",
+   "category": "promo",
    "phase": 1,
    "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
-  },
-  {
-   "subject": "Your payment to Zephyr was successful",
-   "snippet": "Charge confirmed. View your billing history anytime.",
-   "category": "receipt",
-   "phase": 1,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Zephyr was successful\nCharge confirmed. View your billing history anytime."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: We miss you! Come back for 20% off FROM the mobile app Team\nLimited time only. Unsubscribe anytime."
   },
   {
    "subject": "fyi / no rush FROM Lena",
@@ -244,60 +100,388 @@
    "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Lena\nShared some notes from the sync \u2014 no action needed today."
   },
   {
-   "subject": "fyi / no rush FROM Marcus",
+   "subject": "fyi / no rush FROM Priya",
    "snippet": "Left a couple of comments on your PR whenever you get a sec.",
    "category": "teammate_fyi",
    "phase": 1,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Marcus\nLeft a couple of comments on your PR whenever you get a sec."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Priya\nLeft a couple of comments on your PR whenever you get a sec."
   },
   {
-   "subject": "We miss you! Come back for 20% off FROM Nimbus Team",
+   "subject": "Starts in 20 min: 1:1 with Priya",
+   "snippet": "Reminder: your meeting with Priya begins soon.",
+   "category": "calendar_soon",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Priya\nReminder: your meeting with Priya begins soon."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Diego",
+   "snippet": "Reminder: your meeting with Diego begins soon.",
+   "category": "calendar_soon",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Diego\nReminder: your meeting with Diego begins soon."
+  },
+  {
+   "subject": "[ALERT] payment gateway timeouts",
+   "snippet": "payment gateway timeouts on the checkout service. Auto-generated.",
+   "category": "monitoring",
+   "phase": 1,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] payment gateway timeouts\npayment gateway timeouts on the checkout service. Auto-generated."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Yuki",
+   "snippet": "Reminder: your meeting with Yuki begins soon.",
+   "category": "calendar_soon",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Yuki\nReminder: your meeting with Yuki begins soon."
+  },
+  {
+   "subject": "[ALERT] an API outage",
+   "snippet": "an API outage on the checkout service. Auto-generated.",
+   "category": "monitoring",
+   "phase": 1,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] an API outage\nan API outage on the checkout service. Auto-generated."
+  },
+  {
+   "subject": "Your payment to Nimbus was successful",
+   "snippet": "Charge confirmed. View your billing history anytime.",
+   "category": "receipt",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Nimbus was successful\nCharge confirmed. View your billing history anytime."
+  },
+  {
+   "subject": "fyi / no rush FROM Aisha",
+   "snippet": "Thinking about refactoring the utils, curious what you think sometime.",
+   "category": "teammate_fyi",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Aisha\nThinking about refactoring the utils, curious what you think sometime."
+  },
+  {
+   "subject": "48-hour sale \u2014 40% off FROM SoundOff Team",
    "snippet": "Limited time only. Unsubscribe anytime.",
    "category": "promo",
    "phase": 1,
    "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: We miss you! Come back for 20% off FROM Nimbus Team\nLimited time only. Unsubscribe anytime."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 48-hour sale \u2014 40% off FROM SoundOff Team\nLimited time only. Unsubscribe anytime."
   },
   {
-   "subject": "Someone mentioned you in a comment",
+   "subject": "Need your call on Atlas FROM Marcus",
+   "snippet": "Are we shipping Atlas today? Need your sign-off.",
+   "category": "mgr_project",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Marcus\nAre we shipping Atlas today? Need your sign-off."
+  },
+  {
+   "subject": "[ALERT] an API outage",
+   "snippet": "Threshold breached \u2014 an API outage. Dashboard link inside.",
+   "category": "monitoring",
+   "phase": 1,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] an API outage\nThreshold breached \u2014 an API outage. Dashboard link inside."
+  },
+  {
+   "subject": "fyi / no rush FROM Yuki",
+   "snippet": "Left a couple of comments on your PR whenever you get a sec.",
+   "category": "teammate_fyi",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Yuki\nLeft a couple of comments on your PR whenever you get a sec."
+  },
+  {
+   "subject": "Need your call on Atlas FROM Yuki",
+   "snippet": "Quick decision needed on Atlas \u2014 reviewers are waiting on you.",
+   "category": "mgr_project",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Yuki\nQuick decision needed on Atlas \u2014 reviewers are waiting on you."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Priya",
+   "snippet": "Reminder: your meeting with Priya begins soon.",
+   "category": "calendar_soon",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Priya\nReminder: your meeting with Priya begins soon."
+  },
+  {
+   "subject": "[ALERT] checkout 5xx errors",
+   "snippet": "Threshold breached \u2014 checkout 5xx errors. Dashboard link inside.",
+   "category": "monitoring",
+   "phase": 1,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] checkout 5xx errors\nThreshold breached \u2014 checkout 5xx errors. Dashboard link inside."
+  },
+  {
+   "subject": "Need your call on Atlas FROM Diego",
+   "snippet": "Can you weigh in before the standup? It's blocking Atlas.",
+   "category": "mgr_project",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Diego\nCan you weigh in before the standup? It's blocking Atlas."
+  },
+  {
+   "subject": "fyi / no rush FROM Priya",
+   "snippet": "Thinking about refactoring the utils, curious what you think sometime.",
+   "category": "teammate_fyi",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Priya\nThinking about refactoring the utils, curious what you think sometime."
+  },
+  {
+   "subject": "fyi / no rush FROM Marcus",
+   "snippet": "Thinking about refactoring the utils, curious what you think sometime.",
+   "category": "teammate_fyi",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Marcus\nThinking about refactoring the utils, curious what you think sometime."
+  },
+  {
+   "subject": "Need your call on Atlas FROM Diego",
+   "snippet": "Can you weigh in before the standup? It's blocking Atlas.",
+   "category": "mgr_project",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Diego\nCan you weigh in before the standup? It's blocking Atlas."
+  },
+  {
+   "subject": "Need your call on Atlas FROM Tom",
+   "snippet": "Are we shipping Atlas today? Need your sign-off.",
+   "category": "mgr_project",
+   "phase": 1,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Tom\nAre we shipping Atlas today? Need your sign-off."
+  },
+  {
+   "subject": "Your payment to Zephyr was successful",
+   "snippet": "Charge confirmed. View your billing history anytime.",
+   "category": "receipt",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Zephyr was successful\nCharge confirmed. View your billing history anytime."
+  },
+  {
+   "subject": "Your payment to the mobile app was successful",
+   "snippet": "Payment of $12.00 received. Thanks for your order.",
+   "category": "receipt",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to the mobile app was successful\nPayment of $12.00 received. Thanks for your order."
+  },
+  {
+   "subject": "New features you'll love FROM Kettle Team",
+   "snippet": "Limited time only. Unsubscribe anytime.",
+   "category": "promo",
+   "phase": 1,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: New features you'll love FROM Kettle Team\nLimited time only. Unsubscribe anytime."
+  },
+  {
+   "subject": "Your payment to Nimbus was successful",
+   "snippet": "Charge confirmed. View your billing history anytime.",
+   "category": "receipt",
+   "phase": 1,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Nimbus was successful\nCharge confirmed. View your billing history anytime."
+  },
+  {
+   "subject": "48-hour sale \u2014 40% off FROM the mobile app Team",
+   "snippet": "Limited time only. Unsubscribe anytime.",
+   "category": "promo",
+   "phase": 1,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 48-hour sale \u2014 40% off FROM the mobile app Team\nLimited time only. Unsubscribe anytime."
+  },
+  {
+   "subject": "Need your call on Project Nomad FROM Diego",
+   "snippet": "Can you weigh in before the standup? It's blocking Project Nomad.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Diego\nCan you weigh in before the standup? It's blocking Project Nomad."
+  },
+  {
+   "subject": "fyi / no rush FROM Yuki",
+   "snippet": "Shared some notes from the sync \u2014 no action needed today.",
+   "category": "teammate_fyi",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Yuki\nShared some notes from the sync \u2014 no action needed today."
+  },
+  {
+   "subject": "Need your call on the billing rewrite FROM Priya",
+   "snippet": "Can you weigh in before the standup? It's blocking the billing rewrite.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the billing rewrite FROM Priya\nCan you weigh in before the standup? It's blocking the billing rewrite."
+  },
+  {
+   "subject": "Your payment to SoundOff was successful",
+   "snippet": "Charge confirmed. View your billing history anytime.",
+   "category": "receipt",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to SoundOff was successful\nCharge confirmed. View your billing history anytime."
+  },
+  {
+   "subject": "[ALERT] checkout 5xx errors",
+   "snippet": "checkout 5xx errors on the checkout service. Auto-generated.",
+   "category": "monitoring",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] checkout 5xx errors\ncheckout 5xx errors on the checkout service. Auto-generated."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Sam",
+   "snippet": "Reminder: your meeting with Sam begins soon.",
+   "category": "calendar_soon",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Sam\nReminder: your meeting with Sam begins soon."
+  },
+  {
+   "subject": "48-hour sale \u2014 40% off FROM the mobile app Team",
+   "snippet": "Limited time only. Unsubscribe anytime.",
+   "category": "promo",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 48-hour sale \u2014 40% off FROM the mobile app Team\nLimited time only. Unsubscribe anytime."
+  },
+  {
+   "subject": "48-hour sale \u2014 40% off FROM Kettle Team",
+   "snippet": "Limited time only. Unsubscribe anytime.",
+   "category": "promo",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 48-hour sale \u2014 40% off FROM Kettle Team\nLimited time only. Unsubscribe anytime."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Aisha",
+   "snippet": "Reminder: your meeting with Aisha begins soon.",
+   "category": "calendar_soon",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Aisha\nReminder: your meeting with Aisha begins soon."
+  },
+  {
+   "subject": "You have 3 new followers",
    "snippet": "Tap to see the activity.",
    "category": "social",
    "phase": 2,
    "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: You have 3 new followers\nTap to see the activity."
   },
   {
-   "subject": "[ALERT] a DB failover",
-   "snippet": "a DB failover on the checkout service. Auto-generated.",
-   "category": "monitoring",
-   "phase": 2,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] a DB failover\na DB failover on the checkout service. Auto-generated."
-  },
-  {
-   "subject": "We miss you! Come back for 20% off FROM SoundOff Team",
-   "snippet": "Limited time only. Unsubscribe anytime.",
-   "category": "promo",
-   "phase": 2,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: We miss you! Come back for 20% off FROM SoundOff Team\nLimited time only. Unsubscribe anytime."
-  },
-  {
-   "subject": "fyi / no rush FROM Marcus",
-   "snippet": "Left a couple of comments on your PR whenever you get a sec.",
-   "category": "teammate_fyi",
-   "phase": 2,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Marcus\nLeft a couple of comments on your PR whenever you get a sec."
-  },
-  {
-   "subject": "Need your call on the search revamp FROM Tom",
-   "snippet": "Quick decision needed on the search revamp \u2014 reviewers are waiting on you.",
+   "subject": "Need your call on Atlas FROM Lena",
+   "snippet": "Can you weigh in before the standup? It's blocking Atlas.",
    "category": "mgr_project",
    "phase": 2,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the search revamp FROM Tom\nQuick decision needed on the search revamp \u2014 reviewers are waiting on you."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Lena\nCan you weigh in before the standup? It's blocking Atlas."
+  },
+  {
+   "subject": "fyi / no rush FROM Priya",
+   "snippet": "Shared some notes from the sync \u2014 no action needed today.",
+   "category": "teammate_fyi",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Priya\nShared some notes from the sync \u2014 no action needed today."
+  },
+  {
+   "subject": "Need your call on the search revamp FROM Aisha",
+   "snippet": "Can you weigh in before the standup? It's blocking the search revamp.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the search revamp FROM Aisha\nCan you weigh in before the standup? It's blocking the search revamp."
+  },
+  {
+   "subject": "[ALERT] elevated error rate",
+   "snippet": "Automated alert: elevated error rate detected in production.",
+   "category": "monitoring",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] elevated error rate\nAutomated alert: elevated error rate detected in production."
+  },
+  {
+   "subject": "Need your call on the Q3 launch FROM Sam",
+   "snippet": "Quick decision needed on the Q3 launch \u2014 reviewers are waiting on you.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the Q3 launch FROM Sam\nQuick decision needed on the Q3 launch \u2014 reviewers are waiting on you."
+  },
+  {
+   "subject": "Need your call on Project Nomad FROM Tom",
+   "snippet": "Are we shipping Project Nomad today? Need your sign-off.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Tom\nAre we shipping Project Nomad today? Need your sign-off."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Tom",
+   "snippet": "Reminder: your meeting with Tom begins soon.",
+   "category": "calendar_soon",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Tom\nReminder: your meeting with Tom begins soon."
+  },
+  {
+   "subject": "Need your call on Project Nomad FROM Aisha",
+   "snippet": "Are we shipping Project Nomad today? Need your sign-off.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Aisha\nAre we shipping Project Nomad today? Need your sign-off."
+  },
+  {
+   "subject": "Need your call on Project Nomad FROM Tom",
+   "snippet": "Are we shipping Project Nomad today? Need your sign-off.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Tom\nAre we shipping Project Nomad today? Need your sign-off."
+  },
+  {
+   "subject": "fyi / no rush FROM Yuki",
+   "snippet": "Shared some notes from the sync \u2014 no action needed today.",
+   "category": "teammate_fyi",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Yuki\nShared some notes from the sync \u2014 no action needed today."
+  },
+  {
+   "subject": "[ALERT] checkout 5xx errors",
+   "snippet": "Threshold breached \u2014 checkout 5xx errors. Dashboard link inside.",
+   "category": "monitoring",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] checkout 5xx errors\nThreshold breached \u2014 checkout 5xx errors. Dashboard link inside."
+  },
+  {
+   "subject": "[ALERT] an API outage",
+   "snippet": "Automated alert: an API outage detected in production.",
+   "category": "monitoring",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] an API outage\nAutomated alert: an API outage detected in production."
+  },
+  {
+   "subject": "Need your call on Project Nomad FROM Lena",
+   "snippet": "Quick decision needed on Project Nomad \u2014 reviewers are waiting on you.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Lena\nQuick decision needed on Project Nomad \u2014 reviewers are waiting on you."
   },
   {
    "subject": "Starts in 20 min: 1:1 with Priya",
@@ -308,20 +492,36 @@
    "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Priya\nReminder: your meeting with Priya begins soon."
   },
   {
-   "subject": "[ALERT] payment gateway timeouts",
-   "snippet": "Automated alert: payment gateway timeouts detected in production.",
-   "category": "monitoring",
-   "phase": 2,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] payment gateway timeouts\nAutomated alert: payment gateway timeouts detected in production."
-  },
-  {
-   "subject": "Need your call on the billing rewrite FROM Sam",
-   "snippet": "Are we shipping the billing rewrite today? Need your sign-off.",
+   "subject": "Need your call on Project Nomad FROM Sam",
+   "snippet": "Can you weigh in before the standup? It's blocking Project Nomad.",
    "category": "mgr_project",
    "phase": 2,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the billing rewrite FROM Sam\nAre we shipping the billing rewrite today? Need your sign-off."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Sam\nCan you weigh in before the standup? It's blocking Project Nomad."
+  },
+  {
+   "subject": "5 people liked your post",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 5 people liked your post\nTap to see the activity."
+  },
+  {
+   "subject": "Your payment to the mobile app was successful",
+   "snippet": "Payment of $12.00 received. Thanks for your order.",
+   "category": "receipt",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to the mobile app was successful\nPayment of $12.00 received. Thanks for your order."
+  },
+  {
+   "subject": "New features you'll love FROM Nimbus Team",
+   "snippet": "Limited time only. Unsubscribe anytime.",
+   "category": "promo",
+   "phase": 2,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: New features you'll love FROM Nimbus Team\nLimited time only. Unsubscribe anytime."
   },
   {
    "subject": "Starts in 20 min: 1:1 with Yuki",
@@ -332,28 +532,76 @@
    "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Yuki\nReminder: your meeting with Yuki begins soon."
   },
   {
-   "subject": "Need your call on the billing rewrite FROM Sam",
-   "snippet": "Are we shipping the billing rewrite today? Need your sign-off.",
-   "category": "mgr_project",
-   "phase": 2,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the billing rewrite FROM Sam\nAre we shipping the billing rewrite today? Need your sign-off."
-  },
-  {
-   "subject": "Need your call on Project Nomad FROM Marcus",
-   "snippet": "Can you weigh in before the standup? It's blocking Project Nomad.",
-   "category": "mgr_project",
-   "phase": 2,
-   "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Marcus\nCan you weigh in before the standup? It's blocking Project Nomad."
-  },
-  {
-   "subject": "Your payment to Kettle was successful",
-   "snippet": "Your invoice is attached. No action required.",
+   "subject": "Your payment to Nimbus was successful",
+   "snippet": "Payment of $12.00 received. Thanks for your order.",
    "category": "receipt",
    "phase": 2,
    "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Kettle was successful\nYour invoice is attached. No action required."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Nimbus was successful\nPayment of $12.00 received. Thanks for your order."
+  },
+  {
+   "subject": "Need your call on the Q3 launch FROM Diego",
+   "snippet": "Can you weigh in before the standup? It's blocking the Q3 launch.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the Q3 launch FROM Diego\nCan you weigh in before the standup? It's blocking the Q3 launch."
+  },
+  {
+   "subject": "Need your call on the search revamp FROM Tom",
+   "snippet": "Can you weigh in before the standup? It's blocking the search revamp.",
+   "category": "mgr_project",
+   "phase": 2,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the search revamp FROM Tom\nCan you weigh in before the standup? It's blocking the search revamp."
+  },
+  {
+   "subject": "[ALERT] a pager alert",
+   "snippet": "Automated alert: a pager alert detected in production.",
+   "category": "monitoring",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] a pager alert\nAutomated alert: a pager alert detected in production."
+  },
+  {
+   "subject": "[ALERT] checkout 5xx errors",
+   "snippet": "Threshold breached \u2014 checkout 5xx errors. Dashboard link inside.",
+   "category": "monitoring",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] checkout 5xx errors\nThreshold breached \u2014 checkout 5xx errors. Dashboard link inside."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Sam",
+   "snippet": "Reminder: your meeting with Sam begins soon.",
+   "category": "calendar_soon",
+   "phase": 2,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Sam\nReminder: your meeting with Sam begins soon."
+  },
+  {
+   "subject": "[ALERT] payment latency",
+   "snippet": "Automated alert: payment latency detected in production.",
+   "category": "monitoring",
+   "phase": 3,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] payment latency\nAutomated alert: payment latency detected in production."
+  },
+  {
+   "subject": "Need your call on the search revamp FROM Sam",
+   "snippet": "Quick decision needed on the search revamp \u2014 reviewers are waiting on you.",
+   "category": "mgr_project",
+   "phase": 3,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the search revamp FROM Sam\nQuick decision needed on the search revamp \u2014 reviewers are waiting on you."
+  },
+  {
+   "subject": "5 people liked your post",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 3,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 5 people liked your post\nTap to see the activity."
   },
   {
    "subject": "You have 3 new followers",
@@ -362,6 +610,30 @@
    "phase": 3,
    "action": "INTERRUPT",
    "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: You have 3 new followers\nTap to see the activity."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Tom",
+   "snippet": "Reminder: your meeting with Tom begins soon.",
+   "category": "calendar_soon",
+   "phase": 3,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Tom\nReminder: your meeting with Tom begins soon."
+  },
+  {
+   "subject": "fyi / no rush FROM Tom",
+   "snippet": "Shared some notes from the sync \u2014 no action needed today.",
+   "category": "teammate_fyi",
+   "phase": 3,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Tom\nShared some notes from the sync \u2014 no action needed today."
+  },
+  {
+   "subject": "Need your call on Atlas FROM Priya",
+   "snippet": "Quick decision needed on Atlas \u2014 reviewers are waiting on you.",
+   "category": "mgr_project",
+   "phase": 3,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Atlas FROM Priya\nQuick decision needed on Atlas \u2014 reviewers are waiting on you."
   },
   {
    "subject": "Someone mentioned you in a comment",
@@ -372,132 +644,180 @@
    "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
   },
   {
-   "subject": "fyi / no rush FROM Yuki",
-   "snippet": "Left a couple of comments on your PR whenever you get a sec.",
-   "category": "teammate_fyi",
-   "phase": 3,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Yuki\nLeft a couple of comments on your PR whenever you get a sec."
-  },
-  {
-   "subject": "You have 3 new followers",
+   "subject": "Someone mentioned you in a comment",
    "snippet": "Tap to see the activity.",
    "category": "social",
    "phase": 3,
    "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: You have 3 new followers\nTap to see the activity."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
   },
   {
-   "subject": "[ALERT] checkout 5xx errors",
-   "snippet": "checkout 5xx errors on the checkout service. Auto-generated.",
-   "category": "monitoring",
-   "phase": 3,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] checkout 5xx errors\ncheckout 5xx errors on the checkout service. Auto-generated."
-  },
-  {
-   "subject": "48-hour sale \u2014 40% off FROM Nimbus Team",
+   "subject": "New features you'll love FROM the mobile app Team",
    "snippet": "Limited time only. Unsubscribe anytime.",
    "category": "promo",
    "phase": 3,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 48-hour sale \u2014 40% off FROM Nimbus Team\nLimited time only. Unsubscribe anytime."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: New features you'll love FROM the mobile app Team\nLimited time only. Unsubscribe anytime."
   },
   {
-   "subject": "Your payment to Zephyr was successful",
-   "snippet": "Your invoice is attached. No action required.",
-   "category": "receipt",
+   "subject": "5 people liked your post",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 3,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 5 people liked your post\nTap to see the activity."
+  },
+  {
+   "subject": "We miss you! Come back for 20% off FROM Zephyr Team",
+   "snippet": "Limited time only. Unsubscribe anytime.",
+   "category": "promo",
    "phase": 3,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to Zephyr was successful\nYour invoice is attached. No action required."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: We miss you! Come back for 20% off FROM Zephyr Team\nLimited time only. Unsubscribe anytime."
   },
   {
-   "subject": "Starts in 20 min: 1:1 with Yuki",
-   "snippet": "Reminder: your meeting with Yuki begins soon.",
+   "subject": "Starts in 20 min: 1:1 with Aisha",
+   "snippet": "Reminder: your meeting with Aisha begins soon.",
    "category": "calendar_soon",
    "phase": 3,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Yuki\nReminder: your meeting with Yuki begins soon."
-  },
-  {
-   "subject": "Need your call on the search revamp FROM Aisha",
-   "snippet": "Are we shipping the search revamp today? Need your sign-off.",
-   "category": "mgr_project",
-   "phase": 3,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on the search revamp FROM Aisha\nAre we shipping the search revamp today? Need your sign-off."
-  },
-  {
-   "subject": "[ALERT] checkout 5xx errors",
-   "snippet": "Automated alert: checkout 5xx errors detected in production.",
-   "category": "monitoring",
-   "phase": 3,
-   "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] checkout 5xx errors\nAutomated alert: checkout 5xx errors detected in production."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Aisha\nReminder: your meeting with Aisha begins soon."
   },
   {
    "subject": "Your payment to the mobile app was successful",
-   "snippet": "Your invoice is attached. No action required.",
+   "snippet": "Charge confirmed. View your billing history anytime.",
    "category": "receipt",
    "phase": 3,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to the mobile app was successful\nYour invoice is attached. No action required."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to the mobile app was successful\nCharge confirmed. View your billing history anytime."
   },
   {
-   "subject": "5 people liked your post",
-   "snippet": "Tap to see the activity.",
-   "category": "social",
-   "phase": 3,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 5 people liked your post\nTap to see the activity."
-  },
-  {
-   "subject": "5 people liked your post",
-   "snippet": "Tap to see the activity.",
-   "category": "social",
-   "phase": 3,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 5 people liked your post\nTap to see the activity."
-  },
-  {
-   "subject": "New features you'll love FROM Kettle Team",
-   "snippet": "Limited time only. Unsubscribe anytime.",
-   "category": "promo",
+   "subject": "Your payment to SoundOff was successful",
+   "snippet": "Charge confirmed. View your billing history anytime.",
+   "category": "receipt",
    "phase": 3,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: New features you'll love FROM Kettle Team\nLimited time only. Unsubscribe anytime."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to SoundOff was successful\nCharge confirmed. View your billing history anytime."
   },
   {
-   "subject": "Need your call on Project Nomad FROM Tom",
-   "snippet": "Are we shipping Project Nomad today? Need your sign-off.",
+   "subject": "5 people liked your post",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 3,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 5 people liked your post\nTap to see the activity."
+  },
+  {
+   "subject": "fyi / no rush FROM Tom",
+   "snippet": "Shared some notes from the sync \u2014 no action needed today.",
+   "category": "teammate_fyi",
+   "phase": 3,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Tom\nShared some notes from the sync \u2014 no action needed today."
+  },
+  {
+   "subject": "Someone mentioned you in a comment",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 3,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
+  },
+  {
+   "subject": "Starts in 20 min: 1:1 with Aisha",
+   "snippet": "Reminder: your meeting with Aisha begins soon.",
+   "category": "calendar_soon",
+   "phase": 3,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Aisha\nReminder: your meeting with Aisha begins soon."
+  },
+  {
+   "subject": "Someone mentioned you in a comment",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 3,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
+  },
+  {
+   "subject": "5 people liked your post",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 3,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 5 people liked your post\nTap to see the activity."
+  },
+  {
+   "subject": "Need your call on Project Nomad FROM Aisha",
+   "snippet": "Can you weigh in before the standup? It's blocking Project Nomad.",
    "category": "mgr_project",
    "phase": 3,
    "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Tom\nAre we shipping Project Nomad today? Need your sign-off."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Aisha\nCan you weigh in before the standup? It's blocking Project Nomad."
   },
   {
-   "subject": "fyi / no rush FROM Lena",
+   "subject": "Starts in 20 min: 1:1 with Marcus",
+   "snippet": "Reminder: your meeting with Marcus begins soon.",
+   "category": "calendar_soon",
+   "phase": 3,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Marcus\nReminder: your meeting with Marcus begins soon."
+  },
+  {
+   "subject": "Need your call on Project Nomad FROM Diego",
+   "snippet": "Can you weigh in before the standup? It's blocking Project Nomad.",
+   "category": "mgr_project",
+   "phase": 3,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Need your call on Project Nomad FROM Diego\nCan you weigh in before the standup? It's blocking Project Nomad."
+  },
+  {
+   "subject": "[ALERT] a pager alert",
+   "snippet": "Automated alert: a pager alert detected in production.",
+   "category": "monitoring",
+   "phase": 3,
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] a pager alert\nAutomated alert: a pager alert detected in production."
+  },
+  {
+   "subject": "Someone mentioned you in a comment",
+   "snippet": "Tap to see the activity.",
+   "category": "social",
+   "phase": 3,
+   "action": "INTERRUPT",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Someone mentioned you in a comment\nTap to see the activity."
+  },
+  {
+   "subject": "fyi / no rush FROM Marcus",
    "snippet": "Left a couple of comments on your PR whenever you get a sec.",
    "category": "teammate_fyi",
    "phase": 3,
    "action": "ARCHIVE",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Lena\nLeft a couple of comments on your PR whenever you get a sec."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: fyi / no rush FROM Marcus\nLeft a couple of comments on your PR whenever you get a sec."
   },
   {
-   "subject": "5 people liked your post",
-   "snippet": "Tap to see the activity.",
-   "category": "social",
+   "subject": "[ALERT] an API outage",
+   "snippet": "Automated alert: an API outage detected in production.",
+   "category": "monitoring",
    "phase": 3,
-   "action": "INTERRUPT",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: 5 people liked your post\nTap to see the activity."
+   "action": "ARCHIVE",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: [ALERT] an API outage\nAutomated alert: an API outage detected in production."
   },
   {
-   "subject": "Starts in 20 min: 1:1 with Sam",
-   "snippet": "Reminder: your meeting with Sam begins soon.",
-   "category": "calendar_soon",
+   "subject": "Your payment to the mobile app was successful",
+   "snippet": "Payment of $12.00 received. Thanks for your order.",
+   "category": "receipt",
    "phase": 3,
    "action": "LATER",
-   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Starts in 20 min: 1:1 with Sam\nReminder: your meeting with Sam begins soon."
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: Your payment to the mobile app was successful\nPayment of $12.00 received. Thanks for your order."
+  },
+  {
+   "subject": "We miss you! Come back for 20% off FROM the mobile app Team",
+   "snippet": "Limited time only. Unsubscribe anytime.",
+   "category": "promo",
+   "phase": 3,
+   "action": "LATER",
+   "prompt": "Triage this inbox item into one of INTERRUPT (buzz the user now), LATER (hold it for the digest), or ARCHIVE (never surface it). Answer with exactly one of INTERRUPT, LATER, or ARCHIVE.\n\nSubject: We miss you! Come back for 20% off FROM the mobile app Team\nLimited time only. Unsubscribe anytime."
   }
  ],
  "evals": {

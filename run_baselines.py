@@ -48,7 +48,8 @@ from triage_perf import (
 ICL_K_SWEEP = (3, 6, 9, 12, 15)
 ICL_K = 15                     # regret-primary (29.4±1.4 vs k=12 at 30.8±1.2)
 RAG_K = 3                      # regret-primary (30.0±1.4 vs k=6 at 35.0±2.4)
-CHECKPOINTS = tuple(range(6, STREAM_LEN + 1, 6))   # the grid run_sft.py probes too
+CHECKPOINTS = tuple(sorted({*range(6, STREAM_LEN + 1, 6), *DRIFTS, STREAM_LEN}))
+# the grid run_sft.py probes too (incl. exact drift / stream ends)
 
 
 def main() -> None:

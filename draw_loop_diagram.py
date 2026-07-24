@@ -1,9 +1,8 @@
 """Draw the online-SFT loop diagram for the blog post.
 
-One model, two roles: the student makes a bare-prompt call (TEACH), your
-behavior is the expert demonstration that conditions the teacher (CHECK), and
-a few batch_size=1 LoRA steps with CE on the observed action (LEARN).
-The TEACH / CHECK / LEARN diagram embedded in the accompanying blog post.
+Plain online SFT (DISTILL_BETA=0): INFERENCE proposes an action from a bare
+prompt, OBSERVE receives the user's actual action as the label, and LEARN
+runs hard CE on that observed action with batch_size=1 + replay.
 
 Writes figures/online_sft_loop.png.
 
@@ -86,17 +85,17 @@ def main() -> None:
     ax.set_ylim(-2.4, 26.8)
     ax.axis("off")
 
-    ax.text(1.0, 23.7, "One model, two roles — the online SFT loop",
+    ax.text(1.0, 23.7, "The online SFT loop — inference → observe → learn",
             fontsize=11.5, fontweight="bold", color="#202124", va="top")
-    ax.text(1.0, 21.9, "same 230M network; observe your action, then LoRA CE",
+    ax.text(1.0, 21.9, "LFM2.5-230M + LoRA · hard CE on the observed action (DISTILL_BETA=0)",
             fontsize=8.8, color=GREY, va="top")
 
     box(ax, 1.5, 11.5, 17.0, 6.4, GREY, "INCOMING ITEM",
         "one notification\nbare prompt\n(~90 tokens)")
-    box(ax, 24.0, 11.5, 17.0, 6.4, BLUE, "STUDENT — serving call",
-        "LFM2.5-230M + LoRA\nbare prompt (π·|x)")
-    box(ax, 53.0, 11.5, 17.0, 6.4, ORANGE, "TEACHER — expert demo",
-        "same adapter +\nyour action as ICL\n(π·|x, c)")
+    box(ax, 24.0, 11.5, 17.0, 6.4, BLUE, "INFERENCE — serving",
+        "LFM2.5-230M + LoRA\nbare prompt (π·|x)\nproposes an action")
+    box(ax, 53.0, 11.5, 17.0, 6.4, ORANGE, "OBSERVE — your action",
+        "open / wait / never\nlands as the label\n(one-bit signal)")
     ax.add_patch(FancyBboxPatch((24.0, 0.3), 24.0, 6.4,
                                 boxstyle="round,pad=0.02,rounding_size=0.55",
                                 linewidth=1.5, edgecolor=PURPLE, facecolor="white",
@@ -104,28 +103,29 @@ def main() -> None:
     ax.text(41.0, 0.3 + 6.4 + 0.5, "LEARN — LoRA CE update", ha="center", va="bottom",
             fontsize=9.5, fontweight="bold", color=PURPLE, zorder=4)
     ax.text(36.0, 0.3 + 6.4 / 2,
-            "LoRA steps: CE on observed action\n(+ replay per other class)",
+            "hard CE on observed action\nbatch_size=1 + replay",
             ha="center", va="center", fontsize=8.5, color="#202124", zorder=4,
             linespacing=1.15)
 
     straight_arrow(ax, (19.2, 14.7), (23.3, 14.7))
     straight_arrow(ax, (41.7, 14.7), (52.3, 14.7), color=BLUE)
 
+    # Model guess is scored for regret / comparison — not the LEARN target.
     ax.text(47.0, 16.6, "own answer", ha="center", va="center",
             fontsize=7.3, color=BLUE, style="italic", zorder=5)
-    ax.text(47.0, 15.4, '"INTERRUPT"', ha="center", va="center",
+    ax.text(47.0, 15.4, '(for regret)', ha="center", va="center",
             fontsize=7.3, color=BLUE, style="italic", zorder=5)
 
     # Tip just right of LEARN (x=48) and below its vertical mid — outside the fill.
     curve_arrow(ax, (58.5, 10.0), (55.0, 6.8), (52.2, 3.8), (49.2, 2.15), ORANGE)
-    ax.text(61.5, 9.2, "expert action c", ha="center", va="center",
+    ax.text(61.5, 9.2, "observed action c", ha="center", va="center",
             fontsize=7.4, color=GREEN)
     ax.text(61.5, 8.1, "(your open / wait / never)", ha="center", va="center",
             fontsize=7.4, color=RED)
-    ax.text(61.5, 6.5, "hard CE on your action\n(optional soft distill)", ha="center",
+    ax.text(61.5, 6.5, "LEARN target =\nobserved action", ha="center",
             va="top", fontsize=7.0, color=GREY, style="italic", linespacing=1.05)
 
-    # Tip under TEACH bottom; steep exit so the -|> head reads as a triangle
+    # Tip under INFERENCE bottom; steep exit so the -|> head reads as a triangle
     # (shallow approach laid the wedge along the box edge and looked blunt).
     curve_arrow(ax, (22.8, 3.4), (17.0, 4.5), (25.5, 8.0), (28.0, 11.0), PURPLE)
     ax.text(13.5, 7.0, "adapter (~1.4 MB)\ndrifts with you", ha="right",

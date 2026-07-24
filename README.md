@@ -30,8 +30,8 @@ Prefer a Colab Jupyter Notebook finished in ~3 minutes? Open [online_sft_colab.i
 | `triage_common.py`       | the drifting inbox stream, the 3-way policy, model helpers                                   |
 | `triage_perf.py`         | serve latency / peak-memory helpers + the on-device cost figure                               |
 | `run_baselines.py`       | causal ZS / ICL / RAG arms + ICL *k* selection → `outputs/baselines.json`                    |
-| `run_sft.py`             | the online SFT loop (serve → observe action → LoRA CE update → guardrail) → results + figures |
+| `run_sft.py`             | the online SFT loop (inference → observe → learn → guardrail) → results + figures            |
 | `run_perf.py`            | re-measure latency/memory from a saved adapter and redraw the perf figure                    |
-| `draw_loop_diagram.py`   | the TEACH / CHECK / LEARN loop diagram                                                       |
+| `draw_loop_diagram.py`   | the inference → observe → learn loop diagram                                                 |
 | `online_sft_colab.ipynb` | standalone Colab demo (run + draw in-notebook)                                               |
 | `data/inbox_triage.json` | the seeded dataset (re-exported and verified on every baselines run)                         |

@@ -5,9 +5,10 @@ The steps, exactly as in the accompanying blog post:
   1. A tiny dataset: a stream that drifts twice
        seeded synthetic inbox; the 3-way policy flips at DRIFTS (triage_common)
   2. The online loop, one item at a time (prequential: test, THEN train)
-       Serve with a bare prompt first — scored for regret BEFORE feedback.
-       Then LoRA-update with hard CE on the observed action tokens
-       (optional soft-distill term via DISTILL_BETA), batch_size=1 with replay.
+       INFERENCE: bare-prompt serve — scored for regret BEFORE feedback.
+       OBSERVE: the user's actual action arrives as the label.
+       LEARN: hard CE on that observed action (optional soft-distill via
+       DISTILL_BETA; shipped default is 0), batch_size=1 with replay.
   3. The probe guardrail: keep the best adapter on the current regime
   4. Serving: bare prompt — the adapter carries the policy
 
@@ -41,9 +42,10 @@ from triage_perf import (
 )
 
 # --- training knobs (the blog's knob table) ---------------------------------- #
-# Student always serves / guesses with the bare prompt; the teacher sees the
-# expert (user) action as an in-context demonstration. TEACHER_SHOTS prepends
-# older causal decisions to the teacher only (0 = just this item's expert action).
+# INFERENCE always serves / guesses with the bare prompt. The LEARN target is
+# the observed user action (hard CE; DISTILL_BETA=0 by default). Optional soft
+# distill (DISTILL_BETA>0) conditions a no-grad teacher on that same action;
+# TEACHER_SHOTS prepends older causal demos there (0 = expert action alone).
 LORA_R = 8                                       # adapter rank (~1.4 MB on disk)
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
@@ -56,7 +58,8 @@ STEPS_PER_ITEM = 8   # batch_size=1 update steps per incoming item — 3-way wan
 TEACHER_SHOTS = 0    # extra history demos in the teacher context (beyond expert)
 DISTILL_T = 3.0      # temperature for the teacher→student soft-CE term
 DISTILL_BETA = 0.0   # 0 = hard CE only (multi-seed regret winner; soft KL hurt)
-CHECKPOINTS = tuple(range(6, STREAM_LEN + 1, 6))   # eval every 6 streamed items
+CHECKPOINTS = tuple(sorted({*range(6, STREAM_LEN + 1, 6), *DRIFTS, STREAM_LEN}))
+# every 6 streamed items, plus exact regime block ends (needed for live means)
 
 ADAPTER_DIR = OUT_DIR / "adapter-online-sft"
 
@@ -150,11 +153,11 @@ def main() -> None:
     tok = load_tokenizer()
     base = load_base_model(device)
 
-    # -- 2+3. the online loop: serve → observe → CE update -------------------- #
+    # -- 2+3. the online loop: inference → observe → learn -------------------- #
     # Prequential (test-then-train): bare prompt guesses first — that prediction
     # feeds the regret curve — then LoRA CE on the observed action (optional
     # soft distill when DISTILL_BETA > 0). Baselines get the same causal history.
-    print("\n== online SFT: bare serve, then CE on observed action ==",
+    print("\n== online SFT: inference → observe → learn (hard CE) ==",
           flush=True)
     model = get_peft_model(base, LoraConfig(
         r=LORA_R, lora_alpha=LORA_ALPHA, lora_dropout=LORA_DROPOUT,
@@ -181,7 +184,7 @@ def main() -> None:
         prediction = parse_action(guess)
         expert = item["action"]                          # actual user behavior
         history = recent_demos(stream[:i], TEACHER_SHOTS) if TEACHER_SHOTS else None
-        # TEACHER context: optional history + (this item, expert action) demo + re-ask
+        # Optional soft-distill context (unused when DISTILL_BETA=0): history + expert action
         teacher_msgs = build_teacher_msgs(item, expert, history)
         row = {"prompt": render_prompt(item), "teacher_msgs": teacher_msgs,
                "action": expert, "pred": prediction,

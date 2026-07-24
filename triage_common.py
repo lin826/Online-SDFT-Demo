@@ -32,12 +32,12 @@ SEED = 7
 ACTIONS = ("INTERRUPT", "LATER", "ARCHIVE")       # the 3-way attention decision
 REGIMES = ("weekday", "on-call", "off-hours")     # three policies, two drifts
 
-# A realistic week, NOT equal thirds: 50% regular weekdays, 20% on-call,
-# 30% off-hours (evenings + the weekend) — 30 / 12 / 18 of a 60-item stream.
+# A realistic week, NOT equal thirds: 35% regular weekdays, 35% on-call,
+# 30% off-hours (evenings + the weekend) — 35 / 35 / 30 of a 100-item stream.
 # The skew is part of the story: RAG's decision store ends up dominated by
-# weekday decisions, so it serves stale weekday answers on off-hours queries.
-STREAM_LEN = 60
-DRIFTS = (30, 42)    # weekday items 1-30 | on-call 31-42 | off-hours 43-60
+# early-regime decisions, so it can serve stale answers after later drifts.
+STREAM_LEN = 100
+DRIFTS = (35, 70)    # weekday items 1-35 | on-call 36-70 | off-hours 71-100
 EVAL_N = 12          # held-out eval items per regime policy
 MAX_NEW = 40         # generated tokens per reply (the answer itself is 1-2 tokens)
 
@@ -153,16 +153,16 @@ def item_prompt(item: dict) -> str:
     return item["prompt"] if "prompt" in item else render_prompt(item)
 
 
-# Category mixes, class-balanced under each regime's policy (10/10/10, 4/4/4,
-# 6/6/6 in the stream blocks; 4/4/4 in every eval set) so a tiny LoRA learns
-# the mapping, not the class prior. Block lengths follow the 50/20/30 week.
+# Category mixes, class-balanced under each regime's policy (12/12/11, 12/12/11,
+# 10/10/10 in the stream blocks; 4/4/4 in every eval set) so a tiny LoRA learns
+# the mapping, not the class prior. Block lengths follow the 35/35/30 week.
 PHASE_SPECS = {
-    1: {"mgr_project": 5, "calendar_soon": 5, "teammate_fyi": 5, "receipt": 5,
-        "monitoring": 4, "promo": 3, "social": 3},                    # 30 items (10/10/10)
-    2: {"calendar_soon": 2, "monitoring": 2, "mgr_project": 4,
-        "teammate_fyi": 1, "promo": 1, "social": 1, "receipt": 1},    # 12 items (4/4/4)
-    3: {"social": 6, "calendar_soon": 2, "promo": 2, "receipt": 2,
-        "mgr_project": 2, "teammate_fyi": 2, "monitoring": 2},        # 18 items (6/6/6)
+    1: {"mgr_project": 6, "calendar_soon": 6, "teammate_fyi": 6, "receipt": 6,
+        "monitoring": 4, "promo": 4, "social": 3},                    # 35 items (12/12/11)
+    2: {"calendar_soon": 6, "monitoring": 6, "mgr_project": 12,
+        "teammate_fyi": 3, "promo": 3, "social": 2, "receipt": 3},    # 35 items (12/12/11)
+    3: {"social": 10, "calendar_soon": 4, "promo": 3, "receipt": 3,
+        "mgr_project": 4, "teammate_fyi": 3, "monitoring": 3},        # 30 items (10/10/10)
 }
 EVAL_SPECS = {  # 12 held-out items per regime, 4/4/4 under that regime's policy
     1: {"mgr_project": 2, "calendar_soon": 2, "teammate_fyi": 2, "receipt": 2,
@@ -207,7 +207,7 @@ def phase_of(pos: int) -> int:
 
 def recent_demos(history: list[dict], k: int) -> list[tuple[dict, str]]:
     """The k most recent observed decisions, oldest first — the causal ICL
-    context (and optional history prepended to the SFT teacher chat)."""
+    context (and optional history for soft-distill teacher chat when used)."""
     return [(item, item["action"]) for item in history[-k:]]
 
 
@@ -279,11 +279,12 @@ def build_msgs(item: dict, demos: list[tuple[dict, str]] | None = None) -> list[
 
 def build_teacher_msgs(item: dict, expert_action: str,
                        demos: list[tuple[dict, str]] | None = None) -> list[dict]:
-    """Teacher chat: same model, privileged with the expert (user) action.
+    """Optional soft-distill teacher chat (used only when DISTILL_BETA > 0).
 
     Shows the user's actual behavior for this item as an in-context demonstration,
-    then re-asks the bare triage question so the teacher produces π(·|x, c)
-    with c = observed user behavior (used only when DISTILL_BETA > 0).
+    then re-asks the bare triage question so a no-grad forward produces π(·|x, c)
+    with c = observed user behavior. Shipped online SFT uses hard CE on the
+    observed action under the bare prompt instead (DISTILL_BETA=0).
     Optional `demos` are older causal decisions prepended before that demo.
     """
     messages: list[dict] = []

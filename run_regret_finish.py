@@ -18,7 +18,7 @@ from pathlib import Path
 
 from sweep_sft import (
     DEFAULT, DEFAULT_ICL_K, DEFAULT_RAG_K, ICL_KS, RAG_KS, SCHEDULES, SEEDS,
-    OUT_JSON, SFT_FLAT_JSON, _cfg_key, _cleanup_mps, _prepare_stream,
+    OUT_JSON, SFT_FLAT_JSON, STREAM_LEN, _cfg_key, _cleanup_mps, _prepare_stream,
     is_corrupt, load_base_model, load_tokenizer, pick_device, rank_key,
     run_baseline_live, run_baseline_regret, run_sft_fresh, save, sft_once,
     summarize, MODEL_NAME,
@@ -81,7 +81,7 @@ def _run() -> None:
         flat.append({"seed": seed, "tag": "B/default", **DEFAULT,
                      "regret": out["regret"], "live_mean": out["live_mean"],
                      "minutes": out.get("minutes", 0.0)})
-        print(f"  seed={seed}: regret={out['regret']}/60  live={out['live_mean']:.3f}  "
+        print(f"  seed={seed}: regret={out['regret']}/{STREAM_LEN}  live={out['live_mean']:.3f}  "
               f"({out.get('minutes', 0):.2f}m)", flush=True)
         payload["sft"]["multi_seed"][dkey] = {"cfg": DEFAULT, **summarize(rows),
                                               "rows": rows}
@@ -119,7 +119,7 @@ def _run() -> None:
                 regret = run_baseline_regret(base, tok, stream, method, k)
                 live = run_baseline_live(base, tok, stream, evals, method, k, block_ends)
                 rows.append({"seed": seed, "regret": regret, "live_mean": live})
-                print(f"  [{method} k={k}] seed={seed}: regret={regret}/60  "
+                print(f"  [{method} k={k}] seed={seed}: regret={regret}/{STREAM_LEN}  "
                       f"live={live:.3f}", flush=True)
             payload[bucket][str(k)] = {
                 "k": k, "is_default": k == default_k,
